@@ -1,0 +1,65 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: payflowx-mysql
+    environment:
+      MYSQL_DATABASE: payflowx
+      MYSQL_USER: payflowx
+      MYSQL_PASSWORD: payflowx
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/mysql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./docker/mysql/seed-data.sql:/docker-entrypoint-initdb.d/02-seed-data.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -proot --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: payflowx-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/payflowx?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: payflowx
+      DB_PASSWORD: payflowx
+      DB_DRIVER: com.mysql.cj.jdbc.Driver
+      PAYFLOWX_ACCESS_TOKEN: payflowx-enterprise-token
+      PAYFLOWX_SIGNING_SECRET: payflowx-super-secret-signing-key
+      PAYFLOWX_PROVIDER_PIN: "4321"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/providers || exit 0"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.tests
+    container_name: payflowx-tests
+    profiles: ["test"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    environment:
+      PAYFLOWX_BASE_URI: http://backend:8080
+      DB_URL: jdbc:mysql://mysql:3306/payflowx?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: payflowx
+      DB_PASSWORD: payflowx
+      PAYFLOWX_ACCESS_TOKEN: payflowx-enterprise-token
+      PAYFLOWX_SIGNING_SECRET: payflowx-super-secret-signing-key
+      PAYFLOWX_PROVIDER_PIN: "4321"
+    volumes:
+      - ./automation/target:/workspace/automation/target

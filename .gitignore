@@ -1,0 +1,30 @@
+# Maven build output
+target/
+*/target/
+
+# Test and reporting output
+allure-results/
+allure-report/
+*/allure-results/
+*/allure-report/
+surefire-reports/
+*/surefire-reports/
+
+# Logs
+*.log
+logs/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# IDE and editor metadata
+.idea/
+.vscode/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["transactionId", "requestId", "redirectURL", "status"],
+  "properties": {
+    "transactionId": { "type": "string", "pattern": "^txn_" },
+    "requestId": { "type": "string", "pattern": "^req_" },
+    "redirectURL": { "type": "string" },
+    "status": { "enum": ["CREATED"] }
+  }
+}

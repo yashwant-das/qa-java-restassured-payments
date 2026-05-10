@@ -1,0 +1,10 @@
+{
+  "itemDescription": "${itemDescription}",
+  "amount": ${amount},
+  "currency": "${currency}",
+  "merchantId": "${merchantId}",
+  "providerId": "${providerId}",
+  "subscription": true,
+  "duration": 1,
+  "isRenewable": true
+}

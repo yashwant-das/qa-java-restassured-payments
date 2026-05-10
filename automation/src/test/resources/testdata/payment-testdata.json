@@ -1,0 +1,5 @@
+{
+  "activeMerchantId": "mrc_enterprise_001",
+  "telcoMerchantId": "mrc_telco_001",
+  "supportedCurrencies": ["USD", "EUR", "INR", "GBP", "SGD"]
+}

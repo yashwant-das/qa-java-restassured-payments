@@ -1,0 +1,82 @@
+name: PayFlowX CI
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: payflowx
+          MYSQL_USER: payflowx
+          MYSQL_PASSWORD: payflowx
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Initialize MySQL schema
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot payflowx < docker/mysql/schema.sql
+          mysql -h 127.0.0.1 -uroot -proot payflowx < docker/mysql/seed-data.sql
+
+      - name: Build backend
+        run: mvn -B -pl backend -am -DskipTests package
+
+      - name: Start backend
+        env:
+          DB_URL: jdbc:mysql://127.0.0.1:3306/payflowx?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+          DB_USERNAME: payflowx
+          DB_PASSWORD: payflowx
+          DB_DRIVER: com.mysql.cj.jdbc.Driver
+        run: |
+          java -jar backend/target/payflowx-backend-*.jar > backend.log 2>&1 &
+          for i in {1..40}; do
+            if curl -s -H "x-access-token: bad" http://localhost:8080/providers >/dev/null; then exit 0; fi
+            sleep 3
+          done
+          cat backend.log
+          exit 1
+
+      - name: Run API automation
+        env:
+          PAYFLOWX_BASE_URI: http://localhost:8080
+          DB_URL: jdbc:mysql://127.0.0.1:3306/payflowx?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+          DB_USERNAME: payflowx
+          DB_PASSWORD: payflowx
+        run: mvn -B -pl automation test
+
+      - name: Archive Allure results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-results
+          path: automation/target/allure-results
+
+      - name: Archive logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: execution-logs
+          path: |
+            backend.log
+            automation/target/logs
