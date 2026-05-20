@@ -59,7 +59,7 @@ This gives the tests stronger coverage because they verify both the API response
 ## 3. Repository Structure
 
 ```text
-payment_aggregator_api_test_fw
+payment-restassured-platform
 ├── backend
 │   └── Spring Boot payment API service
 ├── automation
