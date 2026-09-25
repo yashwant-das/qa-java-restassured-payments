@@ -40,6 +40,7 @@ public class PaymentWorkflow {
         context.setProviderHash(RedirectUrlParser.providerHash(context.getRedirectUrl()));
         assertThat(context.getRedirectUrl()).contains("providerHash=");
         databaseValidator.assertTransactionStatus(context.getTransactionId(), "CREATED");
+        databaseValidator.assertTransactionMatchesRequest(context.getTransactionId(), context.getRequestId(), createRequest);
 
         Response providerAuth = client.validateTransactionData(new ValidateTransactionDataRequest(
                 context.getProviderHash(),
