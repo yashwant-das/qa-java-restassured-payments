@@ -59,7 +59,7 @@ This gives the tests stronger coverage because they verify both the API response
 ## 3. Repository Structure
 
 ```text
-payment-restassured-platform
+qa-java-restassured-payments
 ├── backend
 │   └── Spring Boot payment API service
 ├── automation
