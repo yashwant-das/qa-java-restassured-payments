@@ -10,8 +10,12 @@ import io.restassured.specification.FilterableResponseSpecification;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class SecurityHeaderFilter implements Filter {
+    // The backend rejects a repeated timestamp+signature as a replay, and parallel tests can sign in the same millisecond.
+    private static final AtomicLong LAST_TIMESTAMP = new AtomicLong();
+
     private final FrameworkConfig config = FrameworkConfig.get();
 
     @Override
@@ -19,7 +23,8 @@ public class SecurityHeaderFilter implements Filter {
                            FilterableResponseSpecification responseSpec,
                            FilterContext ctx) {
         URI uri = URI.create(requestSpec.getURI());
-        String timestamp = Long.toString(Instant.now().toEpochMilli());
+        String timestamp = Long.toString(
+                LAST_TIMESTAMP.updateAndGet(last -> Math.max(last + 1, Instant.now().toEpochMilli())));
         String signature = SignatureGenerator.sign(
                 config.signingSecret(),
                 requestSpec.getMethod(),

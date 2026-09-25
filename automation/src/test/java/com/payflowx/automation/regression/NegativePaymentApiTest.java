@@ -136,6 +136,7 @@ public class NegativePaymentApiTest extends BaseApiTest {
     private PaymentWorkflowContext createAuthorizedTransaction() {
         PaymentWorkflowContext context = new PaymentWorkflowContext();
         Response providers = client.getProviders("mrc_enterprise_001");
+        ResponseValidator.assertStatus(providers, 200);
         String providerId = providers.jsonPath().getString("[0].providerId");
         Response create = client.createTransaction(TransactionPayloadBuilder.renewableSubscription("mrc_enterprise_001", providerId));
         ResponseValidator.assertStatus(create, 201);
