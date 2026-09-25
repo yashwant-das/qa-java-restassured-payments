@@ -193,7 +193,7 @@ public class PaymentService {
         }
         String decoded = CryptoUtil.base64UrlDecode(request.providerHash());
         String[] parts = decoded.split("\\|");
-        if (parts.length != 6) {
+        if (parts.length != 7) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_PROVIDER_HASH", "Provider hash is malformed");
         }
         TransactionEntity transaction = findTransaction(parts[0]);

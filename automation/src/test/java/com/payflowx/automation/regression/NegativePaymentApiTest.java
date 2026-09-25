@@ -9,6 +9,7 @@ import com.payflowx.automation.dto.ValidateTransactionDataRequest;
 import com.payflowx.automation.models.PaymentWorkflowContext;
 import com.payflowx.automation.tests.BaseApiTest;
 import com.payflowx.automation.utilities.RedirectUrlParser;
+import com.payflowx.automation.validators.ResponseValidator;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.restassured.response.Response;
@@ -137,12 +138,14 @@ public class NegativePaymentApiTest extends BaseApiTest {
         Response providers = client.getProviders("mrc_enterprise_001");
         String providerId = providers.jsonPath().getString("[0].providerId");
         Response create = client.createTransaction(TransactionPayloadBuilder.renewableSubscription("mrc_enterprise_001", providerId));
+        ResponseValidator.assertStatus(create, 201);
         context.setTransactionId(create.jsonPath().getString("transactionId"));
         context.setRedirectUrl(create.jsonPath().getString("redirectURL"));
         context.setProviderHash(RedirectUrlParser.providerHash(context.getRedirectUrl()));
         Response providerAuth = client.validateTransactionData(new ValidateTransactionDataRequest(
                 context.getProviderHash(),
                 FrameworkConfig.get().providerPin()));
+        ResponseValidator.assertStatus(providerAuth, 200);
         context.setReceipt(providerAuth.jsonPath().getString("receipt"));
         return context;
     }
