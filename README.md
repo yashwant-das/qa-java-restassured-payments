@@ -198,3 +198,7 @@ PAYFLOWX_PROVIDER_PIN=4321
 ```
 
 These are intentionally local defaults. Override them through environment variables in CI or secure runtime environments.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
