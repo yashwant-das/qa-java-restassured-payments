@@ -20,8 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
@@ -31,7 +31,7 @@ jobs:
         run: mvn -B -DskipTests verify
 
       - name: Archive SpotBugs reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: spotbugs-reports
@@ -61,8 +61,8 @@ jobs:
           --health-retries=20
 
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
@@ -100,7 +100,7 @@ jobs:
         run: mvn -B -pl automation test
 
       - name: Publish test summary
-        uses: mikepenz/action-junit-report@v5
+        uses: mikepenz/action-junit-report@v6
         if: always()
         with:
           report_paths: automation/target/surefire-reports/TEST-*.xml
@@ -113,27 +113,27 @@ jobs:
         run: mvn -B -pl automation allure:report
 
       - name: Archive Allure report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: allure-report
           path: automation/target/site/allure-maven-plugin
 
       - name: Upload Allure report for GitHub Pages
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && always()
         with:
           path: automation/target/site/allure-maven-plugin
 
       - name: Archive Allure results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: allure-results
           path: automation/target/allure-results
 
       - name: Archive logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: execution-logs
@@ -156,4 +156,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
