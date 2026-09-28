@@ -2,14 +2,48 @@ name: PayFlowX CI
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: ["main"]
   pull_request:
-    branches: ["main", "master"]
+    branches: ["main"]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  build-and-test:
+  static-analysis:
+    name: Build and static analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Compile and run SpotBugs
+        run: mvn -B -DskipTests verify
+
+      - name: Archive SpotBugs reports
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: spotbugs-reports
+          path: "**/target/spotbugsXml.xml"
+
+  api-tests:
+    name: API tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      checks: write
     services:
       mysql:
         image: mysql:8.4
@@ -27,8 +61,8 @@ jobs:
           --health-retries=20
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
@@ -65,6 +99,32 @@ jobs:
           DB_PASSWORD: payflowx
         run: mvn -B -pl automation test
 
+      - name: Publish test summary
+        uses: mikepenz/action-junit-report@v5
+        if: always()
+        with:
+          report_paths: automation/target/surefire-reports/TEST-*.xml
+          check_name: API test results
+          detailed_summary: true
+          include_passed: true
+
+      - name: Generate Allure report
+        if: always()
+        run: mvn -B -pl automation allure:report
+
+      - name: Archive Allure report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-report
+          path: automation/target/site/allure-maven-plugin
+
+      - name: Upload Allure report for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && always()
+        with:
+          path: automation/target/site/allure-maven-plugin
+
       - name: Archive Allure results
         uses: actions/upload-artifact@v4
         if: always()
@@ -80,3 +140,20 @@ jobs:
           path: |
             backend.log
             automation/target/logs
+
+  publish-report:
+    name: Publish Allure report
+    needs: api-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !cancelled()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

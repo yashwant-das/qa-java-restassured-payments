@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -86,7 +87,7 @@ public class PaymentService {
         entity.setCurrency(request.currency().toUpperCase());
         entity.setStatus(TransactionStatus.CREATED);
         entity.setSubscription(Boolean.TRUE.equals(request.subscription()));
-        entity.setDuration(request.duration() == null ? 1 : request.duration());
+        entity.setDuration(Objects.requireNonNullElse(request.duration(), 1));
         entity.setRenewable(Boolean.TRUE.equals(request.isRenewable()));
         transactionRepository.save(entity);
 
