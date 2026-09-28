@@ -1,4 +1,6 @@
-# PayFlowX
+# qa-java-restassured-payments
+
+PayFlowX: a REST Assured and TestNG suite that tests a signed, stateful payment API end to end, from provider discovery through charge, renewal and cancellation, and checks the database after every step.
 
 [![PayFlowX CI](https://github.com/yashwant-das/qa-java-restassured-payments/actions/workflows/payflowx-ci.yml/badge.svg?branch=main)](https://github.com/yashwant-das/qa-java-restassured-payments/actions/workflows/payflowx-ci.yml)
 [![CodeQL](https://github.com/yashwant-das/qa-java-restassured-payments/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/yashwant-das/qa-java-restassured-payments/actions/workflows/codeql.yml)
@@ -6,9 +8,9 @@
 [![Java 21](https://img.shields.io/badge/Java-21-blue)](pom.xml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-PayFlowX is an enterprise-grade API automation and fake payment transaction platform for secure payment orchestration testing. It combines a Spring Boot 3 backend, MySQL 8 persistence, and a REST Assured/TestNG automation framework that validates realistic payment workflows, security controls, database state, audit trails, and reporting artifacts.
+## Why it exists
 
-This is not a CRUD sample. The system models distributed fintech transaction behavior: provider discovery, transaction creation, redirect authorization, receipt validation, finalization, charging, subscription renewal, cancellation, status tracking, and database reconciliation.
+Payment APIs fail in ways a CRUD test suite never sees: bad signatures, replayed requests, illegal state transitions and rows that disagree with the API response. PayFlowX pairs a fake Spring Boot payment backend with an automation framework that signs every request with HMAC-SHA256, walks the full transaction lifecycle, and validates the MySQL state and audit trail alongside each response.
 
 ## Architecture
 
@@ -29,101 +31,21 @@ flowchart LR
     B --> Security
 ```
 
-## Modules
+The TestNG suite calls the backend through signed REST Assured clients and reads MySQL directly through HikariCP to confirm what the backend wrote. Allure collects every request, response and SQL check.
 
-- `backend`: fake payment backend APIs implemented with Java 21, Spring Boot 3, JPA, validation, HMAC security, replay prevention, and audit logging.
-- `automation`: enterprise REST Assured framework with reusable clients, filters, dynamic signing, workflow orchestration, DB validation, schema validation, Allure reporting, and TestNG parallel execution.
-- `docker/mysql`: production-like MySQL schema, seed data, and cleanup scripts.
-- `.github/workflows`: CI quality gates covering static analysis, API tests with Allure reporting, CodeQL, and dependency review.
+## Quickstart
 
-## Payment APIs
-
-All APIs require:
-
-- `x-access-token`
-- `x-dp-signature`
-- `x-dp-timestamp`
-
-Implemented endpoints:
-
-- `GET /providers?merchantId=...`
-- `POST /transactions`
-- `GET /transactions/{transactionId}`
-- `POST /transactions/{transactionId}/finalise`
-- `POST /transactions/{transactionId}/charge`
-- `POST /transactions/{transactionId}/renew`
-- `DELETE /transactions/{transactionId}/cancel`
-- `POST /validateTransactionData`
-
-Transaction statuses:
-
-`CREATED`, `PENDING`, `PROCESSING`, `SUCCESS`, `FAILED`, `CANCELLED`, `CHARGED`, `RENEWED`
-
-## Security Model
-
-Requests are signed using:
-
-```text
-METHOD + "\n" + PATH + "\n" + QUERY_STRING + "\n" + EPOCH_MILLISECONDS
-```
-
-The backend validates token, HMAC-SHA256 signature, timestamp skew, and replayed signatures. The automation framework injects these headers dynamically through `SecurityHeaderFilter`.
-
-## Mandatory Workflow Coverage
-
-The primary workflow test executes:
-
-1. Get providers
-2. Create transaction
-3. Extract `transactionId`
-4. Extract `redirectURL`
-5. Extract encoded `providerHash`
-6. Validate provider data
-7. Get receipt
-8. Finalise transaction
-9. Verify `SUCCESS`
-10. Charge transaction
-11. Renew subscription
-12. Cancel transaction
-13. Verify final DB state, subscription state, audit logs, and timestamps
-
-Main workflow test:
-
-`automation/src/test/java/com/payflowx/automation/workflows/PaymentLifecycleWorkflowTest.java`
-
-## Database
-
-Tables:
-
-- `merchants`
-- `providers`
-- `transactions`
-- `subscriptions`
-- `audit_logs`
-
-SQL scripts:
-
-- `docker/mysql/schema.sql`
-- `docker/mysql/seed-data.sql`
-- `docker/mysql/cleanup.sql`
-- `backend/src/main/resources/db/schema.sql`
-- `backend/src/main/resources/db/seed-data.sql`
-
-## Run Locally With Docker
-
-Start MySQL and backend:
+Prerequisites: Docker with Compose v2. To run without Docker: Java 21, Maven 3.9+ and MySQL 8.
 
 ```bash
-docker compose up --build mysql backend
+git clone https://github.com/yashwant-das/qa-java-restassured-payments.git && cd qa-java-restassured-payments
+docker compose up --build -d mysql backend                                  # MySQL on 3306, backend on 8080
+docker compose --profile test up --build --abort-on-container-exit tests   # runs the suite
 ```
 
-Run the automation service:
+The tests container exits 0 when the suite passes.
 
-```bash
-docker compose --profile test up --build --abort-on-container-exit tests
-```
-
-## Run Locally Without Docker
+### Without Docker
 
 Start MySQL 8 and initialize:
 
@@ -149,45 +71,7 @@ Run tests:
 mvn -pl automation test
 ```
 
-## Allure Reporting
-
-Generate and open the report after tests:
-
-```bash
-mvn -pl automation allure:report
-mvn -pl automation allure:serve
-```
-
-Allure includes API request/response payloads, headers, SQL validation details, timings, suite metadata, owners, epics, features, and severity.
-
-## Framework Design
-
-Key framework packages:
-
-- `clients`: REST Assured API clients and reusable specifications
-- `filters`: security header injection, logging, Allure attachments
-- `auth`: HMAC signing
-- `builders`: dynamic payment test data
-- `db`: HikariCP connection management
-- `validators`: response, schema, state transition, and DB validators
-- `workflows`: business process orchestration
-- `tests`, `smoke`, `regression`, `workflows`: categorized TestNG coverage
-
-## Negative Coverage
-
-Implemented negative scenarios include:
-
-- invalid merchant
-- invalid provider
-- invalid amount
-- invalid currency
-- invalid token
-- invalid signature
-- expired timestamp
-- duplicate finalization support in backend behavior
-- invalid receipt support in backend behavior
-
-## CI/CD
+## Test reports and results
 
 Every push and pull request to `main` runs these checks:
 
@@ -207,7 +91,105 @@ mvn -DskipTests verify
 
 SpotBugs suppressions live in [`spotbugs-exclude.xml`](spotbugs-exclude.xml).
 
-## Default Test Credentials
+Allure reports include API request and response payloads, headers, SQL validation details, timings, suite metadata, owners, epics, features and severity. To build and open one locally after a run:
+
+```bash
+mvn -pl automation allure:report
+mvn -pl automation allure:serve
+```
+
+## What is tested
+
+### Payment APIs
+
+All APIs require:
+
+- `x-access-token`
+- `x-dp-signature`
+- `x-dp-timestamp`
+
+Implemented endpoints:
+
+- `GET /providers?merchantId=...`
+- `POST /transactions`
+- `GET /transactions/{transactionId}`
+- `POST /transactions/{transactionId}/finalise`
+- `POST /transactions/{transactionId}/charge`
+- `POST /transactions/{transactionId}/renew`
+- `DELETE /transactions/{transactionId}/cancel`
+- `POST /validateTransactionData`
+
+Transaction statuses:
+
+`CREATED`, `PENDING`, `PROCESSING`, `SUCCESS`, `FAILED`, `CANCELLED`, `CHARGED`, `RENEWED`
+
+### Security model
+
+Requests are signed using:
+
+```text
+METHOD + "\n" + PATH + "\n" + QUERY_STRING + "\n" + EPOCH_MILLISECONDS
+```
+
+The backend validates token, HMAC-SHA256 signature, timestamp skew, and replayed signatures. The automation framework injects these headers dynamically through `SecurityHeaderFilter`.
+
+### End-to-end workflow coverage
+
+The primary workflow test executes:
+
+1. Get providers
+2. Create transaction
+3. Extract `transactionId`
+4. Extract `redirectURL`
+5. Extract encoded `providerHash`
+6. Validate provider data
+7. Get receipt
+8. Finalise transaction
+9. Verify `SUCCESS`
+10. Charge transaction
+11. Renew subscription
+12. Cancel transaction
+13. Verify final DB state, subscription state, audit logs, and timestamps
+
+Main workflow test:
+
+`automation/src/test/java/com/payflowx/automation/workflows/PaymentLifecycleWorkflowTest.java`
+
+### Negative coverage
+
+Implemented negative scenarios include:
+
+- invalid merchant
+- invalid provider
+- invalid amount
+- invalid currency
+- invalid token
+- invalid signature
+- expired timestamp
+- duplicate finalization support in backend behavior
+- invalid receipt support in backend behavior
+
+### Database
+
+Tables:
+
+- `merchants`
+- `providers`
+- `transactions`
+- `subscriptions`
+- `audit_logs`
+
+SQL scripts:
+
+- `docker/mysql/schema.sql`
+- `docker/mysql/seed-data.sql`
+- `docker/mysql/cleanup.sql`
+- `backend/src/main/resources/db/schema.sql`
+- `backend/src/main/resources/db/seed-data.sql`
+
+### Local test credentials
+
+Local-only defaults for the Docker and CI environments; never reuse them elsewhere.
 
 ```text
 PAYFLOWX_ACCESS_TOKEN=payflowx-enterprise-token
@@ -216,6 +198,49 @@ PAYFLOWX_PROVIDER_PIN=4321
 ```
 
 These are intentionally local defaults. Override them through environment variables in CI or secure runtime environments.
+
+## Tech stack
+
+| Layer | Tool | Version | Why |
+| --- | --- | --- | --- |
+| Backend | Java, Spring Boot, Spring Data JPA | 21, 3.3 | A realistic payment service to test against |
+| Database | MySQL | 8.4 | State and audit trail the tests reconcile against |
+| API tests | REST Assured, TestNG | 5.5, 7.10 | Fluent HTTP clients, filters and parallel suites |
+| Assertions | AssertJ, JSON Schema Validator | 3.26, 5.5 | Readable assertions and response contracts |
+| DB validation | HikariCP, MySQL Connector/J | 5.1, 8.4 | Direct SQL checks after each API call |
+| Reporting | Allure | 2.29 | Request, response and SQL evidence per test |
+| Static analysis | SpotBugs, CodeQL | 4.9, v4 | Build-time and security checks in CI |
+| Runtime | Docker Compose, GitHub Actions | v2 | Same environment locally and in CI |
+
+## Project structure
+
+```text
+├── backend/                 # Spring Boot payment API: auth, controllers, services, JPA entities
+├── automation/              # REST Assured and TestNG framework
+│   └── src/test/java/.../   # smoke, regression, integration, workflows, tests
+├── docker/mysql/            # Schema, seed data and cleanup scripts
+├── docs/                    # Framework architecture
+├── .github/workflows/       # CI, CodeQL and dependency review
+├── docker-compose.yml
+└── pom.xml                  # Parent build for both modules
+```
+
+### Framework packages (automation module)
+
+Key framework packages:
+
+- `clients`: REST Assured API clients and reusable specifications
+- `filters`: security header injection, logging, Allure attachments
+- `auth`: HMAC signing
+- `builders`: dynamic payment test data
+- `db`: HikariCP connection management
+- `validators`: response, schema, state transition, and DB validators
+- `workflows`: business process orchestration
+- `tests`, `smoke`, `regression`, `workflows`: categorized TestNG coverage
+
+## Documentation
+
+- [docs/test-automation-framework-architecture.md](docs/test-automation-framework-architecture.md): framework architecture in depth
 
 ## License
 
