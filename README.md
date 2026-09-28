@@ -1,5 +1,11 @@
 # PayFlowX
 
+[![PayFlowX CI](https://github.com/yashwant-das/qa-java-restassured-payments/actions/workflows/payflowx-ci.yml/badge.svg?branch=main)](https://github.com/yashwant-das/qa-java-restassured-payments/actions/workflows/payflowx-ci.yml)
+[![CodeQL](https://github.com/yashwant-das/qa-java-restassured-payments/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/yashwant-das/qa-java-restassured-payments/actions/workflows/codeql.yml)
+[![Allure Report](https://img.shields.io/badge/Allure-latest%20report-orange)](https://yashwant-das.github.io/qa-java-restassured-payments/)
+[![Java 21](https://img.shields.io/badge/Java-21-blue)](pom.xml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 PayFlowX is an enterprise-grade API automation and fake payment transaction platform for secure payment orchestration testing. It combines a Spring Boot 3 backend, MySQL 8 persistence, and a REST Assured/TestNG automation framework that validates realistic payment workflows, security controls, database state, audit trails, and reporting artifacts.
 
 This is not a CRUD sample. The system models distributed fintech transaction behavior: provider discovery, transaction creation, redirect authorization, receipt validation, finalization, charging, subscription renewal, cancellation, status tracking, and database reconciliation.
@@ -28,7 +34,7 @@ flowchart LR
 - `backend`: fake payment backend APIs implemented with Java 21, Spring Boot 3, JPA, validation, HMAC security, replay prevention, and audit logging.
 - `automation`: enterprise REST Assured framework with reusable clients, filters, dynamic signing, workflow orchestration, DB validation, schema validation, Allure reporting, and TestNG parallel execution.
 - `docker/mysql`: production-like MySQL schema, seed data, and cleanup scripts.
-- `.github/workflows`: CI pipeline that builds, starts services, runs automation, and archives Allure results.
+- `.github/workflows`: CI quality gates covering static analysis, API tests with Allure reporting, CodeQL, and dependency review.
 
 ## Payment APIs
 
@@ -183,11 +189,23 @@ Implemented negative scenarios include:
 
 ## CI/CD
 
-GitHub Actions workflow:
+Every push and pull request to `main` runs these checks:
 
-`.github/workflows/payflowx-ci.yml`
+| Workflow | What it gates |
+| --- | --- |
+| [`payflowx-ci.yml`](.github/workflows/payflowx-ci.yml) | Compiles both modules and runs SpotBugs, then provisions MySQL, starts the backend, and runs the REST Assured suite. Test results appear as a check on the PR, and the Allure HTML report is attached to every run. |
+| [`codeql.yml`](.github/workflows/codeql.yml) | CodeQL security and quality analysis for Java, also run weekly. |
+| [`dependency-review.yml`](.github/workflows/dependency-review.yml) | Blocks pull requests that add dependencies with known high or critical vulnerabilities. |
 
-The pipeline provisions MySQL, loads schema and seed data, builds the backend, starts it, runs REST Assured automation, and archives Allure results and logs.
+On `main`, the latest Allure report is published to [GitHub Pages](https://yashwant-das.github.io/qa-java-restassured-payments/). Dependabot opens update PRs for Maven dependencies, GitHub Actions, and Docker base images.
+
+Run the static analysis gate locally with:
+
+```bash
+mvn -DskipTests verify
+```
+
+SpotBugs suppressions live in [`spotbugs-exclude.xml`](spotbugs-exclude.xml).
 
 ## Default Test Credentials
 
