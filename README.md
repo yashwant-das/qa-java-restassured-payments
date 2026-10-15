@@ -38,15 +38,73 @@ The TestNG suite calls the backend through signed REST Assured clients and reads
 
 ## Quickstart
 
-Prerequisites: Docker with Compose v2. To run without Docker (Java 21, Maven 3.9+ and MySQL 8), follow [docs/local-setup.md](docs/local-setup.md).
+### Prerequisites
+
+- Git
+- Docker Desktop (or Docker Engine) with Compose v2: `docker compose version` should work
+- Free ports `3306` (MySQL) and `8080` (backend)
+
+No Java or Maven install is needed for this path. To run without Docker, or to run tests from IntelliJ against the Dockerised backend, see [docs/local-setup.md](docs/local-setup.md).
+
+### Run the suite
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/yashwant-das/qa-java-restassured-payments.git
+   cd qa-java-restassured-payments
+   ```
+
+2. Start MySQL and the backend (first build takes a few minutes):
+
+   ```bash
+   docker compose up --build -d mysql backend
+   ```
+
+3. Run the test suite:
+
+   ```bash
+   docker compose --profile test up --build --abort-on-container-exit tests
+   ```
+
+4. Check the result. A passing run ends with `Tests run: 11, Failures: 0, Errors: 0, Skipped: 0` and `BUILD SUCCESS`, and the `tests` container exits with code 0.
+
+5. Stop everything and remove the containers:
+
+   ```bash
+   docker compose --profile test down
+   ```
+
+The tests use local-only credentials (see [docs/api-and-test-coverage.md](docs/api-and-test-coverage.md#local-test-credentials)); never reuse them elsewhere.
+
+### View the Allure report
+
+Raw results are written to `automation/target/allure-results` on your machine. To turn them into a browsable report you need Java 21 and Maven 3.9+ locally:
 
 ```bash
-git clone https://github.com/yashwant-das/qa-java-restassured-payments.git && cd qa-java-restassured-payments
-docker compose up --build -d mysql backend                                  # MySQL on 3306, backend on 8080
-docker compose --profile test up --build --abort-on-container-exit tests   # runs the suite
+mvn -pl automation allure:serve
 ```
 
-The tests container exits 0 when the suite passes. It uses local-only test credentials (listed in [docs/api-and-test-coverage.md](docs/api-and-test-coverage.md#local-test-credentials)); never reuse them elsewhere.
+### Troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| `port is already allocated` on 3306 or 8080 | Stop the local MySQL or other service using that port, then retry. |
+| Tests fail right after step 2 | The backend may still be starting. Wait a few seconds and run step 3 again. |
+| `no such service: #` | Your shell passed a trailing `# comment` to Docker. Run the commands without the comment text. |
+| Stale data or odd failures | Run `docker compose --profile test down -v` and start again from step 2. |
+
+### Configuration
+
+Defaults in `automation/src/test/resources/config/local.properties` match the Docker setup. Override any of them with environment variables:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PAYFLOWX_BASE_URI` | `http://localhost:8080` | Backend under test |
+| `PAYFLOWX_ACCESS_TOKEN` | `payflowx-enterprise-token` | Value sent as `x-access-token` |
+| `PAYFLOWX_SIGNING_SECRET` | `payflowx-super-secret-signing-key` | HMAC-SHA256 signing key |
+| `PAYFLOWX_PROVIDER_PIN` | `4321` | Provider authorisation PIN |
+| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | local MySQL `payflowx` | Database used for validation |
 
 ## Test reports and results
 
@@ -90,9 +148,12 @@ Endpoints, statuses, the signing scheme, tables and the framework packages are l
 ├── automation/              # REST Assured and TestNG framework
 │   └── src/test/java/.../   # smoke, regression, integration, workflows, tests
 ├── docker/mysql/            # Schema, seed data and cleanup scripts
+├── Dockerfile.backend       # Backend image
+├── Dockerfile.tests         # Test runner image
 ├── docs/                    # Architecture, API coverage and local setup
 ├── .github/workflows/       # CI, CodeQL and dependency review
 ├── docker-compose.yml
+├── spotbugs-exclude.xml
 └── pom.xml                  # Parent build for both modules
 ```
 

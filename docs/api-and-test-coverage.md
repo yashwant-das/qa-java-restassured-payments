@@ -83,11 +83,9 @@ Tables:
 
 SQL scripts:
 
-- `docker/mysql/schema.sql`
-- `docker/mysql/seed-data.sql`
-- `docker/mysql/cleanup.sql`
-- `backend/src/main/resources/db/schema.sql`
-- `backend/src/main/resources/db/seed-data.sql`
+- `docker/mysql/schema.sql` and `docker/mysql/seed-data.sql`: loaded by MySQL on first container start and by CI
+- `docker/mysql/cleanup.sql`: removes test rows
+- `backend/src/main/resources/db/schema.sql` and `seed-data.sql`: applied by the backend itself on startup; keep them in sync with the Docker copies
 
 ## Local test credentials
 
