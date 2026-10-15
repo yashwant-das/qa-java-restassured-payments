@@ -31,9 +31,9 @@ public class SecurityHeaderFilter implements Filter {
                 uri.getPath(),
                 uri.getQuery(),
                 timestamp);
-        requestSpec.header("x-access-token", config.accessToken());
-        requestSpec.header("x-dp-timestamp", timestamp);
-        requestSpec.header("x-dp-signature", signature);
+        requestSpec.header("X-Api-Key", config.accessToken());
+        requestSpec.header("X-Timestamp", timestamp);
+        requestSpec.header("X-Signature", signature);
         return ctx.next(requestSpec, responseSpec);
     }
 }

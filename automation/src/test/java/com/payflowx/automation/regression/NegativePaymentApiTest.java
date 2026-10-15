@@ -97,9 +97,9 @@ public class NegativePaymentApiTest extends BaseApiTest {
     public void shouldRejectInvalidToken() {
         Response response = given()
                 .baseUri(com.payflowx.automation.config.FrameworkConfig.get().baseUri())
-                .header("x-access-token", "bad-token")
-                .header("x-dp-timestamp", Long.toString(Instant.now().toEpochMilli()))
-                .header("x-dp-signature", "bad-signature")
+                .header("X-Api-Key", "bad-token")
+                .header("X-Timestamp", Long.toString(Instant.now().toEpochMilli()))
+                .header("X-Signature", "bad-signature")
                 .queryParam("merchantId", "merchant_001")
                 .get("/providers");
         assertThat(response.statusCode()).isEqualTo(401);
@@ -110,9 +110,9 @@ public class NegativePaymentApiTest extends BaseApiTest {
         String expired = Long.toString(Instant.now().minusSeconds(3600).toEpochMilli());
         Response response = given()
                 .baseUri(com.payflowx.automation.config.FrameworkConfig.get().baseUri())
-                .header("x-access-token", com.payflowx.automation.config.FrameworkConfig.get().accessToken())
-                .header("x-dp-timestamp", expired)
-                .header("x-dp-signature", "expired")
+                .header("X-Api-Key", com.payflowx.automation.config.FrameworkConfig.get().accessToken())
+                .header("X-Timestamp", expired)
+                .header("X-Signature", "expired")
                 .queryParam("merchantId", "merchant_001")
                 .get("/providers");
         assertThat(response.statusCode()).isEqualTo(401);
@@ -124,9 +124,9 @@ public class NegativePaymentApiTest extends BaseApiTest {
         String now = Long.toString(Instant.now().toEpochMilli());
         Response response = given()
                 .baseUri(com.payflowx.automation.config.FrameworkConfig.get().baseUri())
-                .header("x-access-token", com.payflowx.automation.config.FrameworkConfig.get().accessToken())
-                .header("x-dp-timestamp", now)
-                .header("x-dp-signature", "invalid-signature")
+                .header("X-Api-Key", com.payflowx.automation.config.FrameworkConfig.get().accessToken())
+                .header("X-Timestamp", now)
+                .header("X-Signature", "invalid-signature")
                 .queryParam("merchantId", "merchant_001")
                 .get("/providers");
         assertThat(response.statusCode()).isEqualTo(401);

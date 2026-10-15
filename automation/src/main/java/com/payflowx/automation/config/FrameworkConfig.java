@@ -25,15 +25,15 @@ public final class FrameworkConfig {
     }
 
     public String baseUri() {
-        return override("PAYFLOWX_BASE_URI", "base.uri");
+        return override("PAYMENTS_BASE_URI", "base.uri");
     }
 
     public String accessToken() {
-        return override("PAYFLOWX_ACCESS_TOKEN", "access.token");
+        return override("PAYMENTS_API_KEY", "access.token");
     }
 
     public String signingSecret() {
-        return override("PAYFLOWX_SIGNING_SECRET", "signing.secret");
+        return override("PAYMENTS_SIGNING_SECRET", "signing.secret");
     }
 
     public String dbUrl() {
@@ -49,7 +49,7 @@ public final class FrameworkConfig {
     }
 
     public String providerPin() {
-        return override("PAYFLOWX_PROVIDER_PIN", "provider.pin");
+        return override("PAYMENTS_PROVIDER_PIN", "provider.pin");
     }
 
     private String override(String env, String key) {

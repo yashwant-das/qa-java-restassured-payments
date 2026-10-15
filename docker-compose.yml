@@ -1,61 +1,55 @@
+# Connection settings shared by the API and the tests. Security settings use the
+# local-only defaults in application.yml and config.properties.
+x-db: &db
+  DB_URL: jdbc:mysql://mysql:3306/payments?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+  DB_USERNAME: payments
+  DB_PASSWORD: payments
+
 services:
   mysql:
     image: mysql:8.4
-    container_name: payflowx-mysql
     environment:
-      MYSQL_DATABASE: payflowx
-      MYSQL_USER: payflowx
-      MYSQL_PASSWORD: payflowx
+      MYSQL_DATABASE: payments
+      MYSQL_USER: payments
+      MYSQL_PASSWORD: payments
       MYSQL_ROOT_PASSWORD: root
     ports:
       - "3306:3306"
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -proot --silent"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 20
+      retries: 30
 
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    container_name: payflowx-backend
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      DB_URL: jdbc:mysql://mysql:3306/payflowx?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      DB_USERNAME: payflowx
-      DB_PASSWORD: payflowx
-      PAYFLOWX_ACCESS_TOKEN: payflowx-enterprise-token
-      PAYFLOWX_SIGNING_SECRET: payflowx-super-secret-signing-key
-      PAYFLOWX_PROVIDER_PIN: "4321"
+      <<: *db
     ports:
       - "8080:8080"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/providers || exit 0"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
+      # The port only opens once Spring has started; any HTTP answer (even 401) means the API is up.
+      test: ["CMD", "bash", "-c", "</dev/tcp/localhost/8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
 
   tests:
     build:
       context: .
       dockerfile: Dockerfile.tests
-    container_name: payflowx-tests
     profiles: ["test"]
     depends_on:
-      mysql:
-        condition: service_healthy
       backend:
-        condition: service_started
+        condition: service_healthy
     environment:
-      PAYFLOWX_BASE_URI: http://backend:8080
-      DB_URL: jdbc:mysql://mysql:3306/payflowx?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      DB_USERNAME: payflowx
-      DB_PASSWORD: payflowx
-      PAYFLOWX_ACCESS_TOKEN: payflowx-enterprise-token
-      PAYFLOWX_SIGNING_SECRET: payflowx-super-secret-signing-key
-      PAYFLOWX_PROVIDER_PIN: "4321"
+      <<: *db
+      PAYMENTS_BASE_URI: http://backend:8080
     volumes:
       - ./automation/target:/workspace/automation/target

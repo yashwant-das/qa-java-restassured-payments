@@ -3,5 +3,7 @@ WORKDIR /workspace
 COPY pom.xml .
 COPY backend/pom.xml backend/pom.xml
 COPY automation/pom.xml automation/pom.xml
+# Download dependencies in their own layer so source edits don't re-download them.
+RUN mvn -B -q -pl automation dependency:go-offline
 COPY automation/src automation/src
-CMD ["mvn", "-pl", "automation", "test"]
+CMD ["mvn", "-B", "-pl", "automation", "test"]

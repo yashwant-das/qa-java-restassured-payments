@@ -1,17 +1,14 @@
-server:
-  port: ${PAYFLOWX_PORT:8080}
-
 spring:
   application:
-    name: payflowx-backend
+    name: payments-api
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/payflowx?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
-    username: ${DB_USERNAME:payflowx}
-    password: ${DB_PASSWORD:payflowx}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/payments?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USERNAME:payments}
+    password: ${DB_PASSWORD:payments}
     hikari:
       maximum-pool-size: 12
       minimum-idle: 2
-      pool-name: PayFlowXBackendPool
+      pool-name: payments-api-db
   jpa:
     hibernate:
       ddl-auto: none
@@ -26,13 +23,14 @@ spring:
       schema-locations: classpath:db/schema.sql
       data-locations: classpath:db/seed-data.sql
 
-payflowx:
+# Local-only defaults. Never reuse these values outside this project.
+payments:
   security:
-    access-token: ${PAYFLOWX_ACCESS_TOKEN:payflowx-enterprise-token}
-    signing-secret: ${PAYFLOWX_SIGNING_SECRET:payflowx-super-secret-signing-key}
-    timestamp-skew-seconds: ${PAYFLOWX_TIMESTAMP_SKEW_SECONDS:300}
-    provider-pin: ${PAYFLOWX_PROVIDER_PIN:4321}
+    api-key: ${PAYMENTS_API_KEY:local-test-api-key}
+    signing-secret: ${PAYMENTS_SIGNING_SECRET:local-test-signing-secret}
+    timestamp-skew-seconds: ${PAYMENTS_TIMESTAMP_SKEW_SECONDS:300}
+    provider-pin: ${PAYMENTS_PROVIDER_PIN:4321}
 
 logging:
   level:
-    com.payflowx: INFO
+    io.github.yashwantdas.payments: INFO

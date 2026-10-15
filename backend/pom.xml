@@ -3,13 +3,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.payflowx</groupId>
-        <artifactId>payflowx-platform</artifactId>
+        <groupId>io.github.yashwantdas</groupId>
+        <artifactId>payments-parent</artifactId>
         <version>1.0.0</version>
     </parent>
 
-    <artifactId>payflowx-backend</artifactId>
-    <name>PayFlowX Fake Payment Backend</name>
+    <artifactId>payments-api</artifactId>
+    <name>Payments API (system under test)</name>
 
     <dependencies>
         <dependency>
