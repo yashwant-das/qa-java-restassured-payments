@@ -1,6 +1,6 @@
 # PayFlowX Test Automation Framework Architecture
 
-This document explains the architecture of the PayFlowX API automation framework in interview-friendly language. Use it to describe what the framework tests, how it is layered, why each component exists, and how a test request flows through the system.
+This document describes the architecture of the PayFlowX API automation framework: what it tests, how it is layered, why each component exists, and how a test request flows through the system.
 
 ## 1. Framework Purpose
 
@@ -17,10 +17,6 @@ The framework is built around:
 - HikariCP and MySQL
 - Allure reporting
 - Docker-based local and CI execution
-
-In an interview, you can describe it as:
-
-> This is a layered API automation framework for a payment aggregator system. It uses REST Assured and TestNG for API execution, dynamic HMAC signing for secured requests, workflow classes for end-to-end business flows, validators for API and database assertions, and Allure for reporting.
 
 ## 2. High-Level Architecture
 
@@ -66,6 +62,7 @@ qa-java-restassured-payments
 │   └── REST Assured and TestNG automation framework
 ├── docker
 │   └── MySQL schema, seed data, and cleanup scripts
+├── Dockerfile.backend / Dockerfile.tests
 ├── docker-compose.yml
 └── README.md
 ```
@@ -106,10 +103,6 @@ Important classes:
 - Configures REST Assured failure logging.
 - Performs a database health check using `SELECT 1`.
 
-Interview explanation:
-
-> The test layer stays thin. It focuses on test intent and delegates reusable API operations, workflow steps, and validations to framework classes.
-
 ### 4.2 Workflow Layer
 
 Location:
@@ -140,10 +133,6 @@ The workflow layer models business journeys instead of individual API calls. For
 
 The workflow stores runtime values in `PaymentWorkflowContext`.
 
-Interview explanation:
-
-> The workflow layer improves readability and reuse. Instead of repeating multi-step API logic in tests, the framework has a business workflow object that owns the lifecycle and returns a context object containing generated IDs and important runtime data.
-
 ### 4.3 API Client Layer
 
 Location:
@@ -171,10 +160,6 @@ This layer wraps REST Assured calls behind meaningful methods:
 
 The client uses constants from `ApiPaths` so endpoint paths are not duplicated across tests.
 
-Interview explanation:
-
-> The API client layer hides REST Assured syntax from tests. If an endpoint path, request style, or common behavior changes, the update is made in one place.
-
 ### 4.4 REST Client Factory
 
 Location:
@@ -197,10 +182,6 @@ It also defines common response specs such as:
 
 - `ok()` for HTTP 200.
 - `created()` for HTTP 201.
-
-Interview explanation:
-
-> The request factory centralizes REST Assured configuration. This avoids duplicating base URI, content type, filters, and common response expectations in every test.
 
 ### 4.5 Security Layer
 
@@ -227,10 +208,6 @@ PATH
 QUERY_STRING
 EPOCH_MILLISECONDS
 ```
-
-Interview explanation:
-
-> Security is handled as a REST Assured filter, so individual tests do not need to manually add authentication headers. The filter calculates a fresh timestamp and HMAC signature for every request, which also supports replay-prevention testing.
 
 ### 4.6 Configuration Layer
 
@@ -259,10 +236,6 @@ Examples:
 - `DB_USERNAME`
 - `DB_PASSWORD`
 
-Interview explanation:
-
-> The framework supports environment-based configuration. Local defaults are stored in properties files, while CI and secure environments can override values through environment variables.
-
 ### 4.7 Test Data and Payload Builder Layer
 
 Locations:
@@ -283,10 +256,6 @@ The framework uses DTOs and builders for request payloads. For example, `Transac
 - Subscription flag
 - Renewal flag
 - Dynamic item description using Faker
-
-Interview explanation:
-
-> Payload creation is abstracted through builders and DTOs. This makes tests easier to read and prevents repeated manual JSON construction.
 
 ### 4.8 Validator Layer
 
@@ -310,10 +279,6 @@ Examples of validations:
 - Subscription renewal count is updated.
 - Audit log entries exist for important APIs.
 
-Interview explanation:
-
-> The framework uses separate validators so assertions are reusable and consistent. API validation, database validation, and business state transition validation are kept independent.
-
 ### 4.9 Database Layer
 
 Location:
@@ -328,10 +293,6 @@ automation/src/main/java/com/payflowx/automation/db/DatabaseManager.java
 - `update`
 
 The database validator uses this layer to verify backend persistence.
-
-Interview explanation:
-
-> API tests validate more than responses. The framework queries MySQL directly to confirm that API actions produced the expected database state, which is important for payment workflows.
 
 ### 4.10 Reporting Layer
 
@@ -348,10 +309,6 @@ Allure integration is implemented through:
 - `@Epic`, `@Feature`, `@Owner`, and `@Severity` annotations.
 - Custom REST Assured filter attaching API request and response details.
 - Database validator attachments for SQL validation output.
-
-Interview explanation:
-
-> The reporting layer captures API request and response details, elapsed time, test metadata, and database validation evidence. This helps debugging and makes reports useful for stakeholders.
 
 ## 5. End-to-End Request Flow
 
@@ -390,10 +347,6 @@ thread-count="4"
 ```
 
 This means TestNG can run test methods in parallel. The framework supports this by avoiding shared mutable test data where possible and using thread-safe patterns such as `ThreadLocal<Faker>`.
-
-Interview explanation:
-
-> TestNG groups allow selective execution, and parallel method execution improves feedback time. The framework design avoids putting runtime transaction data in static shared variables.
 
 ## 7. Main Scenarios Covered
 
@@ -460,28 +413,7 @@ This makes the framework easier to maintain. For example:
 - If response contracts change, update JSON schema files.
 - If database checks change, update `DatabaseValidator`.
 
-## 9. Interview Talking Points
-
-Use these points when explaining the framework:
-
-- The framework uses a layered design to keep tests readable and reusable.
-- REST Assured handles API execution, while TestNG handles test organization, grouping, and parallel execution.
-- Security is implemented through a REST Assured filter that dynamically signs every request.
-- Workflows model business journeys, not just endpoint-level checks.
-- DTOs and builders are used for clean payload creation.
-- JSON schema validation protects API contracts.
-- Direct database validation verifies persisted backend state.
-- Allure reports include API requests, responses, timings, and DB validation evidence.
-- Config is environment-driven and can be overridden in CI.
-- Negative tests cover both business validation and API security failures.
-
-## 10. Sample Interview Answer
-
-If asked, "Can you explain your automation framework architecture?", you can answer:
-
-> The framework is a Java-based REST Assured and TestNG API automation framework for a payment aggregator backend. It follows a layered architecture. Test classes contain only the test intent, workflow classes model complete business flows, API client classes wrap REST Assured calls, and a request factory centralizes base URI, JSON settings, security, and reporting filters. Every API request is signed dynamically using an HMAC-SHA256 security filter. The framework validates HTTP responses, JSON schemas, database state, payment state transitions, subscriptions, and audit logs. Configuration is environment-driven, and reports are generated through Allure with request, response, and SQL validation attachments.
-
-## 11. How To Run
+## 9. How To Run
 
 Start services with Docker:
 
@@ -513,40 +445,13 @@ Serve Allure report:
 mvn -pl automation allure:serve
 ```
 
-## 12. Files To Remember For Interview
+See the README quickstart for the full Docker workflow and [local-setup.md](local-setup.md) for running without Docker.
 
-```text
-automation/src/test/java/com/payflowx/automation/workflows/PaymentLifecycleWorkflowTest.java
-automation/src/main/java/com/payflowx/automation/workflows/PaymentWorkflow.java
-automation/src/main/java/com/payflowx/automation/clients/PaymentApiClient.java
-automation/src/main/java/com/payflowx/automation/clients/RestClientFactory.java
-automation/src/main/java/com/payflowx/automation/filters/SecurityHeaderFilter.java
-automation/src/main/java/com/payflowx/automation/auth/SignatureGenerator.java
-automation/src/main/java/com/payflowx/automation/validators/ResponseValidator.java
-automation/src/main/java/com/payflowx/automation/validators/DatabaseValidator.java
-automation/src/main/java/com/payflowx/automation/db/DatabaseManager.java
-automation/src/test/resources/testng-suite.xml
-```
+## 10. Possible Improvements
 
-## 13. Strengths To Highlight
-
-- Clear separation of test, client, workflow, validation, config, and reporting layers.
-- Realistic secured API testing with dynamic HMAC signing.
-- End-to-end workflow coverage instead of isolated CRUD tests.
-- API response validation combined with database reconciliation.
-- TestNG grouping and parallel execution support.
-- Allure reporting with strong debugging evidence.
-- Docker and CI-friendly execution model.
-
-## 14. Possible Improvements To Mention
-
-If an interviewer asks how you would improve it, good answers are:
-
-- Add data cleanup hooks per test to make parallel execution even more isolated.
+- Add per-test data cleanup hooks for stronger isolation under parallel execution.
 - Add retry or polling utilities for eventually consistent backend operations.
-- Add contract tests for all endpoints using JSON schemas.
-- Add more environment profiles such as `qa`, `stage`, and `ci`.
-- Add test data factory support for more payment scenarios.
+- Extend JSON schema contract checks to every endpoint.
+- Add more environment profiles such as `qa`, `stage` and `ci`.
 - Mask sensitive headers in Allure attachments.
-- Add tagging strategy for smoke, sanity, regression, security, and database tests.
-
+- Add a tagging strategy for smoke, sanity, regression, security and database tests.
