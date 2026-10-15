@@ -23,8 +23,8 @@ public class SecurityHeaderFilter implements Filter {
                            FilterableResponseSpecification responseSpec,
                            FilterContext ctx) {
         URI uri = URI.create(requestSpec.getURI());
-        String timestamp = Long.toString(
-                LAST_TIMESTAMP.updateAndGet(last -> Math.max(last + 1, Instant.now().toEpochMilli())));
+        // Share the new framework's counter while both run side by side, so their timestamps never collide.
+        String timestamp = io.github.yashwantdas.payments.automation.api.SigningFilter.nextTimestamp();
         String signature = SignatureGenerator.sign(
                 config.signingSecret(),
                 requestSpec.getMethod(),

@@ -13,6 +13,7 @@
         </groups>
         <packages>
             <package name="com.payflowx.automation.*"/>
+            <package name="io.github.yashwantdas.payments.automation"/>
         </packages>
     </test>
 </suite>
