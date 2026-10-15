@@ -3,13 +3,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.payflowx</groupId>
-        <artifactId>payflowx-platform</artifactId>
+        <groupId>io.github.yashwantdas</groupId>
+        <artifactId>payments-parent</artifactId>
         <version>1.0.0</version>
     </parent>
 
-    <artifactId>payflowx-automation</artifactId>
-    <name>PayFlowX Enterprise API Automation</name>
+    <artifactId>payments-automation</artifactId>
+    <name>Payments API automation</name>
 
     <dependencies>
         <dependency>
@@ -23,6 +23,12 @@
             <version>${restassured.version}</version>
         </dependency>
         <dependency>
+            <!-- Serialises the request records -->
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${testng.version}</version>
@@ -33,15 +39,12 @@
             <version>${assertj.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-testng</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-            <scope>provided</scope>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-rest-assured</artifactId>
         </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
@@ -54,38 +57,26 @@
             <version>${mysql.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.javafaker</groupId>
-            <artifactId>javafaker</artifactId>
-            <version>1.0.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.awaitility</groupId>
-            <artifactId>awaitility</artifactId>
-            <version>4.2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>io.qameta.allure</groupId>
-            <artifactId>allure-testng</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>2.0.16</version>
+            <version>${slf4j.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.6.5</version>
+            <version>${logback.version}</version>
         </dependency>
         <dependency>
+            <!-- Pinned so it matches logback-classic; the Spring Boot BOM in the parent would otherwise pick an older core. -->
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
-            <version>1.6.5</version>
+            <version>${logback.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.20.0</version>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>${aspectj.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -94,7 +85,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.2</version>
+                <version>${surefire.version}</version>
                 <configuration>
                     <suiteXmlFiles>
                         <suiteXmlFile>src/test/resources/testng-suite.xml</suiteXmlFile>
@@ -102,13 +93,14 @@
                     <systemPropertyVariables>
                         <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
                     </systemPropertyVariables>
-                    <argLine>-Dfile.encoding=UTF-8</argLine>
+                    <!-- The AspectJ agent makes Allure record @Step methods as report steps. -->
+                    <argLine>-Dfile.encoding=UTF-8 -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"</argLine>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>io.qameta.allure</groupId>
                 <artifactId>allure-maven</artifactId>
-                <version>2.15.2</version>
+                <version>${allure.maven.version}</version>
             </plugin>
         </plugins>
     </build>

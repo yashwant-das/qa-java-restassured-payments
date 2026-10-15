@@ -3,11 +3,15 @@ WORKDIR /workspace
 COPY pom.xml .
 COPY backend/pom.xml backend/pom.xml
 COPY automation/pom.xml automation/pom.xml
+# Download dependencies in their own layer so source edits don't re-download them.
+RUN mvn -B -q -pl backend -am dependency:go-offline
 COPY backend/src backend/src
-RUN mvn -pl backend -am -DskipTests package
+RUN mvn -B -pl backend -am -DskipTests package
 
 FROM eclipse-temurin:21-jre
+RUN useradd --system --no-create-home app
 WORKDIR /app
-COPY --from=build /workspace/backend/target/payflowx-backend-*.jar app.jar
+COPY --from=build /workspace/backend/target/payments-api-*.jar app.jar
+USER app
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
