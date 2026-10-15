@@ -1,5 +1,0 @@
-{
-  "activeMerchantId": "merchant_001",
-  "telcoMerchantId": "merchant_002",
-  "supportedCurrencies": ["USD", "EUR", "INR", "GBP", "SGD"]
-}

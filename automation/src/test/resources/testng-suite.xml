@@ -1,18 +1,10 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
-<suite name="PayFlowX Enterprise API Suite" parallel="methods" thread-count="4" verbose="1">
+<suite name="Payments API tests" parallel="methods" thread-count="4" verbose="1">
     <listeners>
         <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
     </listeners>
-    <test name="Smoke and Workflow">
-        <groups>
-            <run>
-                <include name="smoke"/>
-                <include name="workflow"/>
-                <include name="regression"/>
-            </run>
-        </groups>
+    <test name="API tests">
         <packages>
-            <package name="com.payflowx.automation.*"/>
             <package name="io.github.yashwantdas.payments.automation"/>
         </packages>
     </test>
