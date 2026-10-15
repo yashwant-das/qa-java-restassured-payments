@@ -25,7 +25,7 @@ DB_URL='jdbc:mysql://localhost:3306/payflowx?useSSL=false&allowPublicKeyRetrieva
 DB_USERNAME=payflowx \
 DB_PASSWORD=payflowx \
 DB_DRIVER=com.mysql.cj.jdbc.Driver \
-mvn -pl backend -am spring-boot:run
+mvn -pl backend spring-boot:run
 ```
 
 The backend listens on `http://localhost:8080`. It re-applies the schema and seed data on every start.
