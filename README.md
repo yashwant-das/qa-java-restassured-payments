@@ -138,7 +138,7 @@ Endpoints, statuses, the signing scheme, tables and the framework packages are l
 | Assertions | AssertJ, JSON Schema Validator | 3.26, 5.5 | Readable assertions and response contracts |
 | DB validation | HikariCP, MySQL Connector/J | 5.1, 8.4 | Direct SQL checks after each API call |
 | Reporting | Allure | 2.29 | Request, response and SQL evidence per test |
-| Static analysis | SpotBugs, CodeQL | 4.9, v4 | Build-time and security checks in CI |
+| Static analysis | SpotBugs, CodeQL | 4.10, v4 | Build-time and security checks in CI |
 | Runtime | Docker Compose, GitHub Actions | v2 | Same environment locally and in CI |
 
 ## Project structure
@@ -146,7 +146,7 @@ Endpoints, statuses, the signing scheme, tables and the framework packages are l
 ```text
 ├── backend/                 # Spring Boot payment API: auth, controllers, services, JPA entities
 ├── automation/              # REST Assured and TestNG framework
-│   └── src/test/java/.../   # smoke, regression, integration, workflows, tests
+│   └── src/test/java/.../   # smoke, regression, workflows, tests
 ├── docker/mysql/            # Schema, seed data and cleanup scripts
 ├── Dockerfile.backend       # Backend image
 ├── Dockerfile.tests         # Test runner image

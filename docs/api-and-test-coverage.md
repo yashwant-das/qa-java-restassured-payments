@@ -84,7 +84,7 @@ Tables:
 SQL scripts:
 
 - `docker/mysql/schema.sql` and `docker/mysql/seed-data.sql`: loaded by MySQL on first container start and by CI
-- `docker/mysql/cleanup.sql`: removes test rows
+- `docker/mysql/cleanup.sql`: optional manual script that clears transactions, subscriptions and audit logs (the suite does not run it)
 - `backend/src/main/resources/db/schema.sql` and `seed-data.sql`: applied by the backend itself on startup; keep them in sync with the Docker copies
 
 ## Local test credentials
