@@ -40,6 +40,35 @@ mvn -pl automation test
 
 The defaults in `automation/src/test/resources/config/local.properties` already point at `localhost`. See the README for the environment variables that override them.
 
+## Running tests from an IDE (IntelliJ IDEA)
+
+The simplest setup is to run MySQL and the backend in Docker and run the test classes from the IDE.
+
+1. Start MySQL and the backend:
+
+   ```bash
+   docker compose up --build -d mysql backend
+   ```
+
+2. Confirm the backend is ready. Any HTTP response means it is listening; `401 INVALID_TOKEN` is expected for a bad token:
+
+   ```bash
+   curl -i -H "x-access-token: bad" http://localhost:8080/providers
+   ```
+
+   If you get "connection refused", wait a few seconds or check `docker compose logs backend`.
+
+3. In IntelliJ, open the repository root `pom.xml` as a Maven project and set the project SDK to JDK 21.
+4. Open a test class under `automation/src/test/java`, for example `PaymentLifecycleWorkflowTest`, and click the green run icon. The defaults in `local.properties` already point at `localhost`, so no extra configuration is needed.
+5. To run the whole suite as Maven does, run `automation/src/test/resources/testng-suite.xml` from the IDE.
+6. Stop the containers when you are done so ports 3306 and 8080 are freed:
+
+   ```bash
+   docker compose down
+   ```
+
+To run the backend itself from the IDE, start `PayFlowXBackendApplication` with the `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` and `DB_DRIVER` environment variables shown above, and start only MySQL with `docker compose up -d mysql`.
+
 ## Allure report
 
 ```bash

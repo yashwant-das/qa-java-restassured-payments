@@ -44,7 +44,7 @@ The TestNG suite calls the backend through signed REST Assured clients and reads
 - Docker Desktop (or Docker Engine) with Compose v2: `docker compose version` should work
 - Free ports `3306` (MySQL) and `8080` (backend)
 
-No Java or Maven install is needed for this path. To run without Docker, see [docs/local-setup.md](docs/local-setup.md).
+No Java or Maven install is needed for this path. To run without Docker, or to run tests from IntelliJ against the Dockerised backend, see [docs/local-setup.md](docs/local-setup.md).
 
 ### Run the suite
 
