@@ -28,14 +28,14 @@ public class NegativePaymentApiTest extends BaseApiTest {
 
     @Test(groups = "regression")
     public void shouldRejectInvalidMerchant() {
-        Response response = client.getProviders("mrc_missing");
+        Response response = client.getProviders("merchant_missing");
         assertThat(response.statusCode()).isEqualTo(404);
         assertThat(response.jsonPath().getString("code")).isEqualTo("INVALID_MERCHANT");
     }
 
     @Test(groups = "regression")
     public void shouldRejectInvalidProvider() {
-        CreateTransactionRequest request = TransactionPayloadBuilder.renewableSubscription("mrc_enterprise_001", "prv_missing");
+        CreateTransactionRequest request = TransactionPayloadBuilder.renewableSubscription("merchant_001", "provider_missing");
         Response response = client.createTransaction(request);
         assertThat(response.statusCode()).isEqualTo(404);
         assertThat(response.jsonPath().getString("code")).isEqualTo("INVALID_PROVIDER");
@@ -47,8 +47,8 @@ public class NegativePaymentApiTest extends BaseApiTest {
                 .itemDescription("Invalid amount scenario")
                 .amount(BigDecimal.ZERO)
                 .currency("USD")
-                .merchantId("mrc_enterprise_001")
-                .providerId("prv_stripe_us")
+                .merchantId("merchant_001")
+                .providerId("provider_card_us")
                 .subscription(false)
                 .duration(1)
                 .isRenewable(false)
@@ -63,8 +63,8 @@ public class NegativePaymentApiTest extends BaseApiTest {
                 .itemDescription("Invalid currency scenario")
                 .amount(BigDecimal.TEN)
                 .currency("BTC")
-                .merchantId("mrc_enterprise_001")
-                .providerId("prv_stripe_us")
+                .merchantId("merchant_001")
+                .providerId("provider_card_us")
                 .subscription(false)
                 .duration(1)
                 .isRenewable(false)
@@ -100,7 +100,7 @@ public class NegativePaymentApiTest extends BaseApiTest {
                 .header("x-access-token", "bad-token")
                 .header("x-dp-timestamp", Long.toString(Instant.now().toEpochMilli()))
                 .header("x-dp-signature", "bad-signature")
-                .queryParam("merchantId", "mrc_enterprise_001")
+                .queryParam("merchantId", "merchant_001")
                 .get("/providers");
         assertThat(response.statusCode()).isEqualTo(401);
     }
@@ -113,7 +113,7 @@ public class NegativePaymentApiTest extends BaseApiTest {
                 .header("x-access-token", com.payflowx.automation.config.FrameworkConfig.get().accessToken())
                 .header("x-dp-timestamp", expired)
                 .header("x-dp-signature", "expired")
-                .queryParam("merchantId", "mrc_enterprise_001")
+                .queryParam("merchantId", "merchant_001")
                 .get("/providers");
         assertThat(response.statusCode()).isEqualTo(401);
         assertThat(response.jsonPath().getString("code")).isEqualTo("EXPIRED_TIMESTAMP");
@@ -127,7 +127,7 @@ public class NegativePaymentApiTest extends BaseApiTest {
                 .header("x-access-token", com.payflowx.automation.config.FrameworkConfig.get().accessToken())
                 .header("x-dp-timestamp", now)
                 .header("x-dp-signature", "invalid-signature")
-                .queryParam("merchantId", "mrc_enterprise_001")
+                .queryParam("merchantId", "merchant_001")
                 .get("/providers");
         assertThat(response.statusCode()).isEqualTo(401);
         assertThat(response.jsonPath().getString("code")).isEqualTo("INVALID_SIGNATURE");
@@ -135,10 +135,10 @@ public class NegativePaymentApiTest extends BaseApiTest {
 
     private PaymentWorkflowContext createAuthorizedTransaction() {
         PaymentWorkflowContext context = new PaymentWorkflowContext();
-        Response providers = client.getProviders("mrc_enterprise_001");
+        Response providers = client.getProviders("merchant_001");
         ResponseValidator.assertStatus(providers, 200);
         String providerId = providers.jsonPath().getString("[0].providerId");
-        Response create = client.createTransaction(TransactionPayloadBuilder.renewableSubscription("mrc_enterprise_001", providerId));
+        Response create = client.createTransaction(TransactionPayloadBuilder.renewableSubscription("merchant_001", providerId));
         ResponseValidator.assertStatus(create, 201);
         context.setTransactionId(create.jsonPath().getString("transactionId"));
         context.setRedirectUrl(create.jsonPath().getString("redirectURL"));

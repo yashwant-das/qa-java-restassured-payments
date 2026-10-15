@@ -19,7 +19,7 @@ public class PaymentLifecycleWorkflowTest extends BaseApiTest {
     @Severity(SeverityLevel.CRITICAL)
     public void shouldCompleteProviderRedirectFinaliseChargeRenewCancelWorkflow() {
         PaymentWorkflowContext context = new PaymentWorkflow()
-                .executeSuccessfulRenewableSubscription("mrc_enterprise_001");
+                .executeSuccessfulRenewableSubscription("merchant_001");
 
         assertThat(context.getTransactionId()).startsWith("txn_");
         assertThat(context.getRequestId()).startsWith("req_");

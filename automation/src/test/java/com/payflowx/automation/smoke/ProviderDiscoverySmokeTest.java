@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ProviderDiscoverySmokeTest extends BaseApiTest {
     @Test(groups = "smoke")
     public void shouldReturnActiveProvidersForMerchant() {
-        var response = new PaymentApiClient().getProviders("mrc_enterprise_001");
+        var response = new PaymentApiClient().getProviders("merchant_001");
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.jsonPath().getList("$")).isNotEmpty();
         assertThat(response.jsonPath().getString("[0].status")).isEqualTo("ACTIVE");

@@ -31,7 +31,7 @@ CREATE TABLE transactions (
     receipt_hash VARCHAR(128),
     request_id VARCHAR(96),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_transactions_merchants FOREIGN KEY (merchant_id) REFERENCES merchants(merchant_id),
     CONSTRAINT fk_transactions_providers FOREIGN KEY (provider_id) REFERENCES providers(provider_id)
 );
