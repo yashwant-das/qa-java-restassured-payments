@@ -1,4 +1,4 @@
-name: PayFlowX CI
+name: CI
 
 on:
   push:
@@ -44,22 +44,6 @@ jobs:
     permissions:
       contents: read
       checks: write
-    services:
-      mysql:
-        image: mysql:8.4
-        env:
-          MYSQL_DATABASE: payflowx
-          MYSQL_USER: payflowx
-          MYSQL_PASSWORD: payflowx
-          MYSQL_ROOT_PASSWORD: root
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -uroot -proot --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=20
-
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -68,36 +52,20 @@ jobs:
           java-version: "21"
           cache: maven
 
-      - name: Initialize MySQL schema
-        run: |
-          mysql -h 127.0.0.1 -uroot -proot payflowx < docker/mysql/schema.sql
-          mysql -h 127.0.0.1 -uroot -proot payflowx < docker/mysql/seed-data.sql
+      # The same commands as the README quickstart.
+      - name: Start MySQL and the API
+        run: docker compose up --build -d --wait mysql backend
 
-      - name: Build backend
-        run: mvn -B -pl backend -am -DskipTests package
+      - name: Run API tests
+        run: docker compose --profile test up --build --abort-on-container-exit --exit-code-from tests tests
 
-      - name: Start backend
-        env:
-          DB_URL: jdbc:mysql://127.0.0.1:3306/payflowx?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-          DB_USERNAME: payflowx
-          DB_PASSWORD: payflowx
-          DB_DRIVER: com.mysql.cj.jdbc.Driver
-        run: |
-          java -jar backend/target/payflowx-backend-*.jar > backend.log 2>&1 &
-          for i in {1..40}; do
-            if curl -s -H "x-access-token: bad" http://localhost:8080/providers >/dev/null; then exit 0; fi
-            sleep 3
-          done
-          cat backend.log
-          exit 1
+      - name: Collect API logs
+        if: always()
+        run: docker compose logs backend > backend.log
 
-      - name: Run API automation
-        env:
-          PAYFLOWX_BASE_URI: http://localhost:8080
-          DB_URL: jdbc:mysql://127.0.0.1:3306/payflowx?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-          DB_USERNAME: payflowx
-          DB_PASSWORD: payflowx
-        run: mvn -B -pl automation test
+      - name: Take ownership of test output
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" automation/target
 
       - name: Publish test summary
         uses: mikepenz/action-junit-report@v6
@@ -140,6 +108,10 @@ jobs:
           path: |
             backend.log
             automation/target/logs
+
+      - name: Stop containers
+        if: always()
+        run: docker compose --profile test down
 
   publish-report:
     name: Publish Allure report
