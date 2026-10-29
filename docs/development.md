@@ -113,7 +113,7 @@ After a test run, generate a static report or open an interactive report server:
 | Static Allure report | `automation/target/site/allure-maven-plugin/` |
 | Automation log | `automation/target/logs/automation.log` |
 
-Allure appends result files across runs. For a report of one run only, clear that run's generated Allure results before testing; retain useful evidence elsewhere first. CI starts from a clean checkout. The committed [report image](assets/allure-report.png) is an existing example preserved from the original repository, not a screenshot of the adoption run.
+Allure appends result files across runs. For a report of one run only, clear that run's generated Allure results before testing; retain useful evidence elsewhere first. CI starts from a clean checkout. The committed [overview](assets/allure-report-overview.png) and [suite view](assets/allure-report-suites.png) were provided by the user from the report dated 2026-10-29. They show 14 passed tests and the current `com.qaframework.payments.automation` namespace; the overview appears first in the README.
 
 ## Quality gates
 
@@ -179,7 +179,7 @@ Standards profile: `complete`, pinned to [a429dd2f2da55a4c3e1c73c7c0d1111f9cd0b9
 | Final Docker verification | Fresh MySQL 8.4.13 quickstart passed 14/14; two `run --rm --no-deps` repeats also passed 14/14, no failures/errors/skips |
 | Repeat-run isolation | Transaction rows increased 3 → 6 → 9; the backend start timestamp was unchanged across both repeats |
 | Source/content preservation | All 46 Java files match the baseline after namespace substitution; maintained file/image links and anchors resolve |
-| Visual review | Existing report screenshot inspected; fresh report/browser and Mermaid rendering unverified because automatic browser approval failed at its usage limit; IDE interaction was not exercised |
+| Visual review | User-provided report overview and suite screenshots inspected: 14 passed tests and the current namespace. Interactive browser and Mermaid rendering remain unverified after automatic approval failed at its usage limit; IDE interaction was not exercised |
 | Existing ruleset | Active `default-branch-protection` prevents deletion and non-fast-forward updates; it has no required-status-check rule |
 | Scanning settings | CodeQL workflow exists; secret scanning and push protection reported disabled during read-only inspection |
 | Hosted checks and deployment | Review the PR checks for actual CI, CodeQL and dependency-review outcomes; Pages deployment requires a successful checked push to `main` after merge |
@@ -188,6 +188,6 @@ Required-check enforcement and optional secret scanning need repository-settings
 
 Java staged formatting is deferred: there is no established formatter configuration, and introducing a formatter across both modules would obscure this namespace/documentation adoption. Compile and SpotBugs remain mandatory; whitespace/config checks apply locally. Owner: Yashwant Das; review trigger: the next Java style change. This is a scoped practical exception, not a claim that a formatter runs.
 
-The original framework guide's design, package overview, signing example, DB assertions, reporting details and API reference now live in [architecture](architecture.md). Docker-free/IDE setup, all configuration defaults and extension guidance live here. The hypothetical receipt endpoint example was replaced with an implemented status endpoint. README coverage, source evidence and the existing Allure image are preserved; no active rollout material was removed.
+The original framework guide's design, package overview, signing example, DB assertions, reporting details and API reference now live in [architecture](architecture.md). Docker-free/IDE setup, all configuration defaults and extension guidance live here. The hypothetical receipt endpoint example was replaced with an implemented status endpoint. README coverage and source evidence are preserved; the old Allure image was replaced with the user-provided overview and suite screenshots; no active rollout material was removed.
 
 The [adoption plan](superpowers/plans/2026-10-28-repo-standards-adoption.md) is a planning record. Current commands are maintained in this guide and the README.

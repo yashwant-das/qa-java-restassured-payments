@@ -44,7 +44,7 @@ qa-java-restassured-payments/
 │   │   └── support/         Seeded data and transaction setup
 │   └── src/test/            TestNG tests, suite and JSON schemas
 ├── backend/src/main/        Spring Boot API, database schema and seed data
-├── docs/                    Architecture, development and report image
+├── docs/                    Architecture, development and report screenshots
 ├── .github/                 CI, CodeQL, dependency review and Dependabot
 ├── .mvn/                    Pinned Maven wrapper configuration
 ├── pom.xml                  Reactor, Java 21 and dependency/plugin versions
@@ -111,7 +111,9 @@ The build/static checks run without payment services; dependency downloads need 
 
 Successful checked pushes to `main` publish the [Allure report](https://yashwant-das.github.io/qa-java-restassured-payments/). Failed executions keep diagnostic artifacts. Workflow configuration does not by itself enforce merge protection; [verification evidence and pending settings](docs/development.md#verification-and-exceptions) distinguish those states.
 
-![Existing Allure report showing lifecycle steps and database checks](docs/assets/allure-report.png)
+![Allure overview showing 14 passed tests and a 100 percent pass rate](docs/assets/allure-report-overview.png)
+
+![Allure suite view showing the four test classes and their passing cases](docs/assets/allure-report-suites.png)
 
 ## Documentation
 
