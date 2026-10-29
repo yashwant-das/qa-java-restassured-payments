@@ -22,7 +22,7 @@ Test a signed, stateful payment API from request to database record. This Java f
 
 ```mermaid
 flowchart LR
-    T[TestNG: four parallel methods] --> C[REST Assured + SigningFilter]
+    T[TestNG: up to four parallel methods] --> C[REST Assured + SigningFilter]
     C -->|signed HTTP| A[Bundled Spring Boot API]
     A -->|JPA: transactions and audit| D[(MySQL)]
     T -->|transaction-scoped SQL assertions| D
@@ -97,7 +97,7 @@ With the backend and database running, use Java 21 and the Maven wrapper to run 
 | [`TransactionValidationTest`](automation/src/test/java/com/qaframework/payments/automation/TransactionValidationTest.java) | 6 | `INVALID_MERCHANT`, `INVALID_PROVIDER`, `VALIDATION_ERROR`, `INVALID_CURRENCY`, `INVALID_RECEIPT`, `DUPLICATE_FINALIZATION` |
 | [`RequestSigningTest`](automation/src/test/java/com/qaframework/payments/automation/RequestSigningTest.java) | 6 | `INVALID_TOKEN`, `MISSING_SECURITY_HEADERS`, `INVALID_TIMESTAMP`, `EXPIRED_TIMESTAMP`, `INVALID_SIGNATURE`, `REPLAY_ATTACK_DETECTED` |
 
-[TestNG](automation/src/test/resources/testng-suite.xml) runs four methods at a time. Test data and database assertions are scoped to each transaction, allowing repeated runs against the same running backend.
+[TestNG](automation/src/test/resources/testng-suite.xml) runs up to four methods at a time. Test data and database assertions are scoped to each transaction, allowing repeated runs against the same running backend.
 
 ## Verification and reports
 

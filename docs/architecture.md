@@ -6,7 +6,7 @@ The automation checks a bundled payment API over HTTP and independently reads it
 
 - **Four small packages.** Framework code is split by job: `config` reads settings, `api` talks HTTP, `db` reads MySQL, `support` builds test data. There are no base layers or wrappers beyond these.
 - **Framework code in `src/main`.** The framework is a library the tests use, so it lives in `automation/src/main/java`. That also puts it under the SpotBugs check in CI, which skips test classes.
-- **Tests read as scripts.** `TransactionLifecycleTest` lists the lifecycle steps in order; each step is an API call, a response check and a DB check. Nothing is hidden in a workflow class.
+- **Tests read as scripts.** `TransactionLifecycleTest` lists the lifecycle steps in order; state-changing calls pair response checks with DB assertions. Nothing is hidden in a workflow class.
 - **Explicit test data.** IDs come from the seed data and requests from small factories in `TestData`. The server generates transaction IDs, so tests need no random data and failures are easy to reproduce.
 - **Raw responses.** `PaymentApi` returns REST Assured `Response` objects and tests assert with `then()`, so each test shows exactly what it checks.
 
@@ -28,7 +28,7 @@ The security filter exempts paths beginning with `/actuator`; this project does 
 | Header | Value |
 | --- | --- |
 | `X-Api-Key` | The shared API key |
-| `X-Timestamp` | Current time in epoch milliseconds; must be within 300 seconds of the server clock |
+| `X-Timestamp` | Epoch milliseconds within the configured server-clock tolerance (300 seconds by default) |
 | `X-Signature` | Hex HMAC-SHA256, keyed with the signing secret, of `METHOD\nPATH\nQUERY\nTIMESTAMP` |
 
 `PATH` and `QUERY` are the raw, still-encoded parts of the URL; `QUERY` is empty when there is none. For `GET /providers?merchantId=merchant_001` the signed string is:
@@ -64,7 +64,7 @@ Allure records the calls each test makes:
 
 - each `PaymentApi` and `DbAssertions` call as a named step (through the AspectJ agent configured in `automation/pom.xml`),
 - the full request and response, including the signed headers (the official `AllureRestAssured` filter, added after `SigningFilter`),
-- each SQL query, its parameters and the row it returned.
+- SQL issued through `DbAssertions`, its parameters and the returned row. The `BaseApiTest` reachability query uses `Database` directly and is logged without an Allure SQL attachment.
 
 Open the latest report locally with `./mvnw -pl automation allure:serve` after a run. CI archives report artifacts after test execution. Publication to GitHub Pages is limited to successful checked pushes to `main`; failed runs retain diagnostic artifacts without replacing the published report.
 
@@ -81,7 +81,7 @@ Open the latest report locally with `./mvnw -pl automation allure:serve` after a
 | POST | `/transactions/{id}/renew` | 200 | → `RENEWED` |
 | DELETE | `/transactions/{id}/cancel` | 200 | → `CANCELLED` |
 
-Error responses have the shape `{"code": "...", "message": "...", "timestamp": "..."}`. The codes the suite checks are listed in the README's test coverage table.
+Errors handled by the API exception handlers and security filter have the shape `{"code": "...", "message": "...", "timestamp": "..."}`. The codes the suite checks are listed in the README's test coverage table.
 
 ## Components and lifecycle
 
@@ -103,7 +103,7 @@ sequenceDiagram
 
 The supported subscription scenario follows `CREATED → PROCESSING → SUCCESS → CHARGED → RENEWED → CANCELLED`. This is a tested scenario, not a claim that the backend enforces every conceivable transition. The [controller](../backend/src/main/java/com/qaframework/payments/backend/controller/PaymentController.java) and [service](../backend/src/main/java/com/qaframework/payments/backend/service/PaymentService.java) define the actual rules.
 
-TestNG runs methods on four threads. Each test creates its own client and transaction; the shared `SigningFilter` timestamp counter is atomic. The automation's shared Hikari pool allows four connections and closes individual JDBC connections/statements/results with try-with-resources. The backend has its own pool, capped at twelve connections. `BaseApiTest` checks database reachability before the suite; the JVM owns the automation pool for that run.
+TestNG runs methods with a four-thread limit. Business test classes share a stateless `PaymentApi` client across their methods; each API call builds a fresh request specification. Tests that need transaction state create their own server-generated transaction. The shared `SigningFilter` timestamp counter is atomic. The automation's shared Hikari pool allows four connections and closes individual JDBC connections/statements/results with try-with-resources. The backend has its own pool, capped at twelve connections. `BaseApiTest` checks database reachability before the suite; the JVM owns the automation pool for that run.
 
 ## Boundaries and trade-offs
 
