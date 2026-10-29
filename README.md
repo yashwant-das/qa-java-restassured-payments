@@ -1,38 +1,69 @@
-# qa-java-restassured-payments
+# Payments API Test Automation
 
-A REST Assured and TestNG framework that tests a signed, stateful payment API end to end: every request is HMAC-signed, every transaction is walked through its full lifecycle, and the database is checked after each step.
+Test a signed, stateful payment API from request to database record. This Java framework runs against a bundled Spring Boot service and checks the subscription lifecycle, rejected requests and persisted audit evidence, so a passing HTTP response is only part of the result.
 
 [![CI](https://github.com/yashwant-das/qa-java-restassured-payments/actions/workflows/ci.yml/badge.svg)](https://github.com/yashwant-das/qa-java-restassured-payments/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/yashwant-das/qa-java-restassured-payments/actions/workflows/codeql.yml/badge.svg)](https://github.com/yashwant-das/qa-java-restassured-payments/actions/workflows/codeql.yml)
-[![Allure report](https://img.shields.io/badge/report-latest%20Allure-blue)](https://yashwant-das.github.io/qa-java-restassured-payments/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Allure report](https://img.shields.io/badge/report-Allure-blue)](https://yashwant-das.github.io/qa-java-restassured-payments/)
 [![Java 21](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](pom.xml)
+[![REST Assured](https://img.shields.io/badge/API-REST_Assured-43A047)](automation/pom.xml)
+[![TestNG](https://img.shields.io/badge/tests-TestNG-D32F2F)](automation/src/test/resources/testng-suite.xml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## What this project demonstrates
 
-- **Request signing in one filter.** [`SigningFilter`](automation/src/main/java/io/github/yashwantdas/payments/automation/api/SigningFilter.java) adds an API key, timestamp and HMAC-SHA256 signature to every call, with timestamps that stay unique across parallel threads.
-- **A full lifecycle as one readable test.** [`TransactionLifecycleTest`](automation/src/test/java/io/github/yashwantdas/payments/automation/TransactionLifecycleTest.java) creates, authorises, finalises, charges, renews and cancels a subscription.
-- **Database checks after every call.** [`DbAssertions`](automation/src/main/java/io/github/yashwantdas/payments/automation/db/DbAssertions.java) compares MySQL rows, the subscription and the audit log with each API response.
-- **Security tests.** [`RequestSigningTest`](automation/src/test/java/io/github/yashwantdas/payments/automation/RequestSigningTest.java) covers a wrong key, missing headers, bad and expired timestamps, a wrong signature and a replayed request.
-- **Evidence in CI.** Every push runs the suite in Docker and publishes an [Allure report](https://yashwant-das.github.io/qa-java-restassured-payments/) with each request, response and SQL check.
+- **Signed requests under parallel execution.** [`SigningFilter`](automation/src/main/java/com/qaframework/payments/automation/api/SigningFilter.java) adds HMAC-SHA256 headers and atomic, increasing timestamps to prevent accidental replay collisions between test threads.
+- **A readable subscription lifecycle.** [`TransactionLifecycleTest`](automation/src/test/java/com/qaframework/payments/automation/TransactionLifecycleTest.java) creates, authorises, finalises, charges, renews and cancels a subscription, checking each state change in MySQL.
+- **Persistence and audit evidence.** [`DbAssertions`](automation/src/main/java/com/qaframework/payments/automation/db/DbAssertions.java) checks transaction fields, subscription renewal/cancellation and successful audit entries, scoped by transaction ID or receipt.
+- **Explicit rejection cases.** [`RequestSigningTest`](automation/src/test/java/com/qaframework/payments/automation/RequestSigningTest.java) tests invalid authentication, malformed/expired timestamps and replay; [`TransactionValidationTest`](automation/src/test/java/com/qaframework/payments/automation/TransactionValidationTest.java) checks business validation.
+- **Inspectable results.** [`PaymentApi`](automation/src/main/java/com/qaframework/payments/automation/api/PaymentApi.java) and the SQL assertion layer attach HTTP exchanges, named steps and query results to Allure.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    T[TestNG + REST Assured tests] -->|signed HTTP| A[Payment API<br/>Spring Boot]
-    A -->|JPA| D[(MySQL)]
-    T -->|SQL checks| D
-    T --> R[Allure results]
+    T[TestNG: up to four parallel methods] --> C[REST Assured + SigningFilter]
+    C -->|signed HTTP| A[Bundled Spring Boot API]
+    A -->|JPA: transactions and audit| D[(MySQL)]
+    T -->|transaction-scoped SQL assertions| D
+    C --> R[Allure: HTTP and steps]
+    T -->|SQL attachments| R
 ```
 
-The API in [`backend/`](backend) is a small Spring Boot service written for this project as the system under test. The framework in [`automation/`](automation) calls it over HTTP and reads MySQL directly to confirm what the API wrote.
+The `backend/` module is the system under test; `automation/` supplies the client, SQL assertions and tests. All eight endpoints run locally. Provider discovery and authorisation are simulated; no external payment gateway is contacted. The backend resets its tables on startup, so use only a disposable database. See [architecture and boundaries](docs/architecture.md).
 
-![Allure report for the lifecycle test](docs/images/allure-report.png)
+### Project structure
+
+```text
+qa-java-restassured-payments/
+├── automation/
+│   ├── src/main/java/com/qaframework/payments/automation/
+│   │   ├── api/             Endpoint client, signing and request records
+│   │   ├── config/          Configuration overrides
+│   │   ├── db/              JDBC pool and SQL assertions
+│   │   └── support/         Seeded data and transaction setup
+│   └── src/test/            TestNG tests, suite and JSON schemas
+├── backend/src/main/        Spring Boot API, database schema and seed data
+├── docs/                    Architecture, development and report screenshots
+├── .github/                 CI, CodeQL, dependency review and Dependabot
+├── .mvn/                    Pinned Maven wrapper configuration
+├── pom.xml                  Reactor, Java 21 and dependency/plugin versions
+└── docker-compose.yml       MySQL, backend and test services
+```
+
+### Tech stack
+
+| Layer | Tools | Version source |
+| --- | --- | --- |
+| Test client and assertions | Java 21, REST Assured, TestNG, AssertJ, JSON Schema Validator | [Parent POM](pom.xml) |
+| Persistence checks | HikariCP, MySQL Connector/J | [Automation POM](automation/pom.xml) |
+| System under test | Spring Boot, Spring Data JPA, MySQL 8.4 | [Backend POM](backend/pom.xml), [Compose](docker-compose.yml) |
+| Reports | Allure, AspectJ steps | [Automation POM](automation/pom.xml) |
+| Quality checks | pre-commit, Markdown lint, SpotBugs, CodeQL, dependency review | [Development guide](docs/development.md#quality-gates) |
 
 ## Quickstart
 
-You need Docker with Compose v2 and free ports 3306 and 8080. No Java install is needed.
+You need Docker with Compose v2 or later and free ports 3306 and 8080. The Docker route includes Java and Maven.
 
 ```bash
 git clone https://github.com/yashwant-das/qa-java-restassured-payments.git
@@ -41,62 +72,53 @@ docker compose up --build -d --wait mysql backend
 docker compose --profile test up --build --abort-on-container-exit --exit-code-from tests tests
 ```
 
-A passing run ends with `Tests run: 14, Failures: 0, Errors: 0, Skipped: 0` and `BUILD SUCCESS`. Stop everything with `docker compose --profile test down`.
-
-Results are written to `automation/target/allure-results`. With Java 21 and Maven installed, `mvn -pl automation allure:serve` opens the report.
-
-| Problem | Fix |
-| --- | --- |
-| `port is already allocated` | Stop whatever uses port 3306 or 8080 and retry. |
-| Odd failures after changing code | Run `docker compose --profile test down`, then start again; `--build` picks up your changes. |
-
-To run without Docker or from an IDE, see the [framework guide](docs/framework-guide.md#running-without-docker).
-
-## Test coverage
-
-| Test class | What it proves | Covers |
-| --- | --- | --- |
-| [`ProviderDiscoveryTest`](automation/src/test/java/io/github/yashwantdas/payments/automation/ProviderDiscoveryTest.java) | An active merchant sees active providers in the documented shape | `GET /providers`, JSON schema |
-| [`TransactionLifecycleTest`](automation/src/test/java/io/github/yashwantdas/payments/automation/TransactionLifecycleTest.java) | A renewable subscription moves CREATED → PROCESSING → SUCCESS → CHARGED → RENEWED → CANCELLED, and the DB row, subscription and audit log match every step | All 8 endpoints |
-| [`TransactionValidationTest`](automation/src/test/java/io/github/yashwantdas/payments/automation/TransactionValidationTest.java) | Business rules reject bad input | `INVALID_MERCHANT`, `INVALID_PROVIDER`, `VALIDATION_ERROR`, `INVALID_CURRENCY`, `INVALID_RECEIPT`, `DUPLICATE_FINALIZATION` |
-| [`RequestSigningTest`](automation/src/test/java/io/github/yashwantdas/payments/automation/RequestSigningTest.java) | Unsigned, badly signed and replayed requests are refused | `INVALID_TOKEN`, `MISSING_SECURITY_HEADERS`, `INVALID_TIMESTAMP`, `EXPIRED_TIMESTAMP`, `INVALID_SIGNATURE`, `REPLAY_ATTACK_DETECTED` |
-
-Tests run four at a time (TestNG `parallel="methods"`). Every DB check is keyed by its own transaction, so parallel runs and repeated runs don't interfere.
-
-## Continuous integration
-
-| Workflow | What it checks |
-| --- | --- |
-| [`ci.yml`](.github/workflows/ci.yml) | Compiles both modules and runs SpotBugs, then runs the quickstart commands, publishes test results on the PR and attaches the Allure report. On `main` the report is published to GitHub Pages. |
-| [`codeql.yml`](.github/workflows/codeql.yml) | CodeQL analysis for Java, also weekly. |
-| [`dependency-review.yml`](.github/workflows/dependency-review.yml) | Blocks PRs that add dependencies with known high or critical vulnerabilities. |
-
-Dependabot keeps Maven dependencies, GitHub Actions and Docker images up to date.
-
-## Project layout
+The suite contains 14 test methods. The verified full run reports:
 
 ```text
-automation/   Test framework (src/main) and tests (src/test)
-backend/      Payment API used as the system under test, with its schema and seed data
-docs/         Framework guide
-.github/      CI, CodeQL, dependency review, Dependabot
-docker-compose.yml, Dockerfile.backend, Dockerfile.tests
+Tests run: 14, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
 ```
 
-## Tech stack
+Results are written to `automation/target/allure-results`. Stop the stack with `docker compose --profile test down`. Docker-free and IDE setup are in the [development guide](docs/development.md#running-without-docker).
 
-| Area | Tools |
+## Usage and coverage
+
+With the backend and database running, use Java 21 and the Maven wrapper to run the suite or view the report:
+
+```bash
+./mvnw -pl automation test
+./mvnw -pl automation allure:serve
+```
+
+| Test class | Cases | What it checks |
+| --- | --- | --- |
+| [`ProviderDiscoveryTest`](automation/src/test/java/com/qaframework/payments/automation/ProviderDiscoveryTest.java) | 1 | Active provider discovery and JSON schema |
+| [`TransactionLifecycleTest`](automation/src/test/java/com/qaframework/payments/automation/TransactionLifecycleTest.java) | 1 | All 8 endpoints; CREATED → PROCESSING → SUCCESS → CHARGED → RENEWED → CANCELLED; SQL and audit assertions |
+| [`TransactionValidationTest`](automation/src/test/java/com/qaframework/payments/automation/TransactionValidationTest.java) | 6 | `INVALID_MERCHANT`, `INVALID_PROVIDER`, `VALIDATION_ERROR`, `INVALID_CURRENCY`, `INVALID_RECEIPT`, `DUPLICATE_FINALIZATION` |
+| [`RequestSigningTest`](automation/src/test/java/com/qaframework/payments/automation/RequestSigningTest.java) | 6 | `INVALID_TOKEN`, `MISSING_SECURITY_HEADERS`, `INVALID_TIMESTAMP`, `EXPIRED_TIMESTAMP`, `INVALID_SIGNATURE`, `REPLAY_ATTACK_DETECTED` |
+
+[TestNG](automation/src/test/resources/testng-suite.xml) runs up to four methods at a time. Test data and database assertions are scoped to each transaction, allowing repeated runs against the same running backend.
+
+## Verification and reports
+
+The build/static checks run without payment services; dependency downloads need network access. API tests need the controlled MySQL/backend stack above. See [quality gates](docs/development.md#quality-gates) for local hook setup and commands shared with CI.
+
+| Workflow | Automated scope |
 | --- | --- |
-| Tests | Java 21, REST Assured 5.5, TestNG 7.10, AssertJ, JSON Schema Validator |
-| Database checks | HikariCP, MySQL Connector/J |
-| Reporting | Allure 2.29 |
-| System under test | Spring Boot 3.3, Spring Data JPA, MySQL 8.4 |
-| Quality gates | SpotBugs, CodeQL, dependency review |
-| Runtime | Docker Compose, GitHub Actions |
+| [CI](.github/workflows/ci.yml) | Full-file hooks and Markdown checks; Java compilation and SpotBugs; Docker API/MySQL suite; test summary and Allure artifacts |
+| [CodeQL](.github/workflows/codeql.yml) | Java security/quality analysis on PRs, pushes to `main` and weekly |
+| [Dependency review](.github/workflows/dependency-review.yml) | Rejects newly introduced known high/critical dependency vulnerabilities on PRs |
 
-## Learn more
+Successful checked pushes to `main` publish the [Allure report](https://yashwant-das.github.io/qa-java-restassured-payments/). Failed executions keep diagnostic artifacts. Workflow configuration does not by itself enforce merge protection; [verification evidence and pending settings](docs/development.md#verification-and-exceptions) distinguish those states.
 
-The [framework guide](docs/framework-guide.md) explains the design, the signing scheme, how to add a test and how to run without Docker.
+![Allure overview showing 14 passed tests and a 100 percent pass rate](docs/assets/allure-report-overview.png)
+
+![Allure suite view showing the four test classes and their passing cases](docs/assets/allure-report-suites.png)
+
+## Documentation
+
+- [Architecture](docs/architecture.md): packages, signing contract, lifecycle, SQL evidence, API reference and demo boundaries.
+- [Development](docs/development.md): setup, overrides, adding tests, reports, troubleshooting and verification evidence.
 
 ## License
 

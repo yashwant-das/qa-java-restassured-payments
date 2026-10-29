@@ -7,7 +7,7 @@ x-db: &db
 
 services:
   mysql:
-    image: mysql:8.4
+    image: mysql:8.4.13
     environment:
       MYSQL_DATABASE: payments
       MYSQL_USER: payments
