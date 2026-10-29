@@ -32,3 +32,6 @@ Thumbs.db
 # Allure commandline downloaded by allure-maven
 .allure/
 */.allure/
+
+# Agent execution scratch
+.superpowers/

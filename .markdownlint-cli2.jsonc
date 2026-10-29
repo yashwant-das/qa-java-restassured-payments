@@ -1,0 +1,12 @@
+{
+  "config": {
+    "default": true,
+    "MD013": false
+  },
+  "ignores": [
+    "**/target/**",
+    "**/node_modules/**",
+    ".superpowers/**",
+    "docs/superpowers/**"
+  ]
+}

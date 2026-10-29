@@ -5,7 +5,7 @@
     </listeners>
     <test name="API tests">
         <packages>
-            <package name="io.github.yashwantdas.payments.automation"/>
+            <package name="com.qaframework.payments.automation"/>
         </packages>
     </test>
 </suite>

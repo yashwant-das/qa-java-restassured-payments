@@ -33,4 +33,4 @@ payments:
 
 logging:
   level:
-    io.github.yashwantdas.payments: INFO
+    com.qaframework.payments: INFO
