@@ -44,7 +44,7 @@ qa-java-restassured-payments/
 │   │   └── support/         Seeded data and transaction setup
 │   └── src/test/            TestNG tests, suite and JSON schemas
 ├── backend/src/main/        Spring Boot API, database schema and seed data
-├── docs/                    Architecture, development and report screenshots
+├── docs/                    System, backend/test guides and report screenshots
 ├── .github/                 CI, CodeQL, dependency review and Dependabot
 ├── .mvn/                    Pinned Maven wrapper configuration
 ├── pom.xml                  Reactor, Java 21 and dependency/plugin versions
@@ -117,7 +117,9 @@ Successful checked pushes to `main` publish the [Allure report](https://yashwant
 
 ## Documentation
 
-- [Architecture](docs/architecture.md): packages, signing contract, lifecycle, SQL evidence, API reference and demo boundaries.
+- [Architecture](docs/architecture.md): system components, data flow, resource lifecycle and boundaries.
+- [Backend architecture](docs/backend-architecture.md): server request flow, API/signing contract, state rules, schema and audit transactions.
+- [Test architecture](docs/test-architecture.md): client design, test data, SQL assertions, parallel execution and Allure evidence.
 - [Development](docs/development.md): setup, overrides, adding tests, reports, troubleshooting and verification evidence.
 
 ## License

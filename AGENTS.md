@@ -5,11 +5,11 @@ This repository uses the `complete` documentation profile from [repo-standards p
 ## Project boundaries
 
 - Preserve Java 21 and the Maven reactor's `backend/` and `automation/` separation. The base package is `com.qaframework.payments`, Maven group `com.qaframework`.
-- Read [architecture](docs/architecture.md) before changing signing, state transitions, concurrency or SQL assertions; read [development](docs/development.md) for commands, checks and exceptions.
+- Read [architecture](docs/architecture.md) for system boundaries, [backend architecture](docs/backend-architecture.md) before changing server signing/state/persistence rules, and [test architecture](docs/test-architecture.md) before changing client signing, concurrency or SQL assertions. Read [development](docs/development.md) for commands, checks and exceptions.
 - The backend is a disposable demonstration service. Its startup SQL drops all tables. Never point it at shared or production data.
 - Preserve readable lifecycle tests, transaction/receipt-scoped assertions, replay cases and Allure HTTP/SQL evidence. Do not weaken tests to accommodate a failing change.
 - Keep README capabilities linked to implementation. Update source links, TestNG discovery and logging categories alongside package moves.
-- Keep current operational guidance in the two maintained guides. `docs/superpowers/` contains planning records, not authoritative setup instructions.
+- Keep current architecture guidance in the overview and backend/test guides, and operational guidance in the development guide. `docs/superpowers/` contains planning records, not authoritative setup instructions.
 
 ## Verification
 

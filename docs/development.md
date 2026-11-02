@@ -2,6 +2,8 @@
 
 Run commands from the repository root unless stated otherwise. The backend is a disposable test target: its startup SQL drops and recreates the `payments` tables.
 
+For component boundaries, start with [architecture](architecture.md). Read [backend architecture](backend-architecture.md) for API/signing and persistence rules, and [test architecture](test-architecture.md) for client design, concurrency and assertions.
+
 ## Docker setup
 
 Install Docker with Compose v2 or later. Reserve ports 3306 and 8080, then run:
@@ -188,6 +190,20 @@ Required-check enforcement and optional secret scanning need repository-settings
 
 Java staged formatting is deferred: there is no established formatter configuration, and introducing a formatter across both modules would obscure this namespace/documentation adoption. Compile and SpotBugs remain mandatory; whitespace/config checks apply locally. Owner: Yashwant Das; review trigger: the next Java style change. This is a scoped practical exception, not a claim that a formatter runs.
 
-The original framework guide's design, package overview, signing example, DB assertions, reporting details and API reference now live in [architecture](architecture.md). Docker-free/IDE setup, all configuration defaults and extension guidance live here. The hypothetical receipt endpoint example was replaced with an implemented status endpoint. README coverage and source evidence are preserved; the old Allure image was replaced with the user-provided overview and suite screenshots; no active rollout material was removed.
+The original framework guide's design, package overview, DB assertions and reporting details now live in [test architecture](test-architecture.md); its signing example and API reference live in [backend architecture](backend-architecture.md). The [architecture overview](architecture.md) connects the two modules and their boundaries. Docker-free/IDE setup, all configuration defaults and extension guidance live here. The hypothetical receipt endpoint example was replaced with an implemented status endpoint. README coverage and source evidence are preserved; the old Allure image was replaced with the user-provided overview and suite screenshots; no active rollout material was removed.
 
 The [adoption plan](superpowers/plans/2026-10-28-repo-standards-adoption.md) is a planning record. Current commands are maintained in this guide and the README.
+
+### Architecture documentation split (2026-11-02)
+
+The pinned `complete` profile retains both required core guides and permits the two additional maintained guides used here: backend and test architecture. The overview still covers component responsibilities, execution/data flow, resource lifecycle, external boundaries and trade-offs; the README indexes all four guides. No standards exception or policy-pin change is needed.
+
+| Check | Outcome |
+| --- | --- |
+| Source/content review | Backend request flow, validation, state guards, schema, seed data, audit transaction boundaries and limitations checked against current source; existing test-design, SQL and report guidance preserved |
+| Full-file hooks | `pre-commit run --all-files` passed; new untracked guides also checked explicitly with `pre-commit run --files docs/backend-architecture.md docs/test-architecture.md`, all applicable hooks passed |
+| Local links and anchors | 98 relative links/anchors across README, AGENTS and the four maintained guides resolved |
+| Java build/static analysis | `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./mvnw -B -DskipTests verify` passed for both modules with zero SpotBugs findings. The initial invocation without `JAVA_HOME` could not locate Java; explicitly selecting the installed JDK 21 resolved it. |
+| Compose configuration | `docker compose config --quiet` passed |
+| Integration and report execution | Not rerun for this documentation-only change; prior dated integration evidence above remains historical |
+| Diagram review | Mermaid source and component flows reviewed; visual rendering on GitHub not exercised |
